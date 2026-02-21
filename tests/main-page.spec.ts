@@ -286,3 +286,86 @@ test('city dropdown and advanced button keep responsive horizontal layout until 
     cityBox.y + cityBox.height > buttonBox.y;
   expect(intersects).toBeFalsy();
 });
+
+test('all tags modal is scrollable on mobile and keeps page scroll locked', async ({ page }) => {
+  await page.route('**/.netlify/functions/public-events**', async (route) => {
+    const url = new URL(route.request().url());
+    const pageNum = url.searchParams.get('page') || '1';
+    if (pageNum !== '1') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+      return;
+    }
+    const tags = Array.from({ length: 70 }, (_, index) => ({
+      label: `Tag ${String(index + 1).padStart(2, '0')}`,
+      status: 'approved'
+    }));
+    const events = [
+      {
+        id: 'evt-tags-modal-1',
+        slug: 'evt-tags-modal-1',
+        title: 'Tags Modal Event',
+        description: 'Tags modal test',
+        tags,
+        start: '2031-01-04T12:00:00+01:00',
+        end: '2031-01-04T14:00:00+01:00',
+        format: 'offline',
+        venue: 'Venue',
+        address: 'Address 1',
+        city: 'Copenhagen',
+        priceType: 'free',
+        priceMin: 0,
+        priceMax: 0,
+        ticketUrl: '',
+        organizerId: 'org-1',
+        images: [],
+        status: 'published',
+        language: 'uk',
+        contactPerson: {}
+      }
+    ];
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(events)
+    });
+  });
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  await waitForEventsRendered(page);
+
+  await page.locator('[data-action="filters-advanced"]').click();
+  const moreButton = page.locator('[data-filters-tags-more]');
+  await expect(moreButton).toBeVisible();
+  await moreButton.click();
+
+  const modal = page.locator('[data-tags-modal]');
+  const modalList = page.locator('[data-tags-modal-list]');
+  await expect(modal).toBeVisible();
+  await expect(page.locator('body')).toHaveClass(/tag-modal-open/);
+
+  const before = await page.evaluate(() => window.scrollY);
+  await page.mouse.wheel(0, 800);
+  const after = await page.evaluate(() => window.scrollY);
+  expect(after).toBe(before);
+
+  await modalList.evaluate((el) => {
+    el.scrollTop = el.scrollHeight;
+  });
+
+  const lastTag = modalList.locator('.filters__tag').last();
+  await expect(lastTag).toBeVisible();
+  await expect(lastTag).toBeInViewport();
+
+  const panelBox = await page.locator('.tag-modal__panel').boundingBox();
+  const lastTagBox = await lastTag.boundingBox();
+  expect(panelBox).toBeTruthy();
+  expect(lastTagBox).toBeTruthy();
+  if (panelBox && lastTagBox) {
+    expect(lastTagBox.y + lastTagBox.height).toBeLessThanOrEqual(panelBox.y + panelBox.height + 1);
+  }
+
+  await page.locator('.tag-modal__close').click();
+  await expect(modal).toBeHidden();
+  await expect(page.locator('body')).not.toHaveClass(/tag-modal-open/);
+});

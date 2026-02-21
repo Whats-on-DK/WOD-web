@@ -2527,18 +2527,26 @@ import {
       });
     }
 
+    const setTagsModalOpen = (isOpen) => {
+      if (!tagsModal) return;
+      tagsModal.hidden = !isOpen;
+      tagsModal.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+      document.body.classList.toggle('tag-modal-open', isOpen);
+      if (isOpen) {
+        tagsModalList?.scrollTo?.({ top: 0, behavior: 'auto' });
+      }
+    };
+
     if (tagsFilterMoreButton && tagsModal) {
       tagsFilterMoreButton.addEventListener('click', () => {
-        tagsModal.hidden = false;
-        tagsModal.setAttribute('aria-hidden', 'false');
+        setTagsModalOpen(true);
       });
     }
 
     if (tagsModal && tagsModalCloseButtons.length) {
       tagsModalCloseButtons.forEach((button) => {
         button.addEventListener('click', () => {
-          tagsModal.hidden = true;
-          tagsModal.setAttribute('aria-hidden', 'true');
+          setTagsModalOpen(false);
         });
       });
     }

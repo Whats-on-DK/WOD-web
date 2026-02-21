@@ -2222,12 +2222,14 @@ body:not(.is-admin) [data-admin-controls] {
   border-radius: 16px;
   border: 1px solid var(--line);
   width: min(640px, 92vw);
-  max-height: 70vh;
-  display: grid;
+  max-height: min(90vh, calc(100dvh - 24px));
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   padding: 16px;
   box-shadow: var(--shadow);
   z-index: 1;
+  overflow: hidden;
 }
 
 .tag-modal__header {
@@ -2235,6 +2237,7 @@ body:not(.is-admin) [data-admin-controls] {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex: 0 0 auto;
 }
 
 .tag-modal__header h3 {
@@ -2256,8 +2259,29 @@ body:not(.is-admin) [data-admin-controls] {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  overflow: auto;
-  padding: 4px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-content: flex-start;
+  padding: 4px 0 calc(16px + env(safe-area-inset-bottom, 0px));
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.tag-modal__list .filters__tag {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.tag-modal__list .filters__tag span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+body.tag-modal-open {
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .organizer {
