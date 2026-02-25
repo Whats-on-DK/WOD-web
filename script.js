@@ -3597,7 +3597,16 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       const response = await fetch('/.netlify/functions/admin-recommended', { headers });
       if (!response.ok) throw new Error('recommended_load_failed');
       const payload = await response.json();
-      if (!payload?.ok) throw new Error(payload?.error || 'recommended_load_failed');
+      if (!payload?.ok) {
+        if (payload?.error === 'migration_required') {
+          setRecommendedStatus(
+            'Recommended is not initialized in DB. Run supabase.recommended.sql migration.',
+            true
+          );
+          return;
+        }
+        throw new Error(payload?.error || 'recommended_load_failed');
+      }
       recommendedSlotsState = Array.isArray(payload.slots) ? payload.slots : [];
       renderRecommendedSlots();
       syncRecommendedEventState();
@@ -3615,6 +3624,9 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || payload?.ok === false) {
+      if (payload?.error === 'migration_required') {
+        throw new Error('migration_required');
+      }
       throw new Error(String(payload?.error || 'reorder_failed'));
     }
     recommendedSlotsState = Array.isArray(payload.slots) ? payload.slots : [];
@@ -3870,6 +3882,13 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           await saveRecommendedOrder(current.map((slot) => String(slot?.event?.id || '')));
           setRecommendedStatus('Slots order saved.');
         } catch (error) {
+          if (error instanceof Error && error.message === 'migration_required') {
+            setRecommendedStatus(
+              'Recommended is not initialized in DB. Run supabase.recommended.sql migration.',
+              true
+            );
+            return;
+          }
           setRecommendedStatus('Failed to save slots order.', true);
         }
       });
@@ -3895,6 +3914,13 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           });
           const payload = await response.json().catch(() => ({}));
           if (!response.ok || payload?.ok === false) {
+            if (payload?.error === 'migration_required') {
+              setRecommendedStatus(
+                'Recommended is not initialized in DB. Run supabase.recommended.sql migration.',
+                true
+              );
+              return;
+            }
             const message =
               payload?.error === 'max_slots_reached'
                 ? 'Maximum 6 active recommended events reached.'
@@ -3926,6 +3952,13 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           });
           const payload = await response.json().catch(() => ({}));
           if (!response.ok || payload?.ok === false) {
+            if (payload?.error === 'migration_required') {
+              setRecommendedStatus(
+                'Recommended is not initialized in DB. Run supabase.recommended.sql migration.',
+                true
+              );
+              return;
+            }
             setRecommendedStatus('Failed to remove recommended placement.', true);
             return;
           }

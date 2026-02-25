@@ -26,6 +26,11 @@ const hasAdminRole = (roles: string[]) => roles.includes('admin') || roles.inclu
 
 const getActorRole = (roles: string[]) => (roles.includes('super_admin') ? 'super_admin' : 'admin');
 
+const isMigrationMissingError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error || '');
+  return message.includes('PGRST202') || message.includes('recommended_manage');
+};
+
 const syncRecommended = async () => {
   await supabaseFetch('rpc/recommended_manage', {
     method: 'POST',
@@ -220,6 +225,17 @@ export const handler = async (event: HandlerEvent, context: HandlerContext) => {
     };
   } catch (error) {
     console.log('admin-recommended error', error);
+    if (isMigrationMissingError(error)) {
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ok: false,
+          error: 'migration_required',
+          message: 'Run Supabase migration `supabase.recommended.sql` to enable Recommended.'
+        })
+      };
+    }
     const message = error instanceof Error ? error.message : 'unknown_error';
     return {
       statusCode: 500,
