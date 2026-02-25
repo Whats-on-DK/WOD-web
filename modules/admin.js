@@ -1239,7 +1239,7 @@ export const initAdmin = ({ formatMessage }) => {
         if (linkEl) {
           linkEl.textContent = item.title || '—';
           if (resolvedId) {
-            linkEl.href = `./event-card.html?id=${encodeURIComponent(resolvedId)}`;
+            linkEl.href = `./event-card.html?id=${encodeURIComponent(resolvedId)}&admin=1`;
           } else {
             linkEl.removeAttribute('href');
             linkEl.setAttribute('aria-disabled', 'true');
@@ -1311,7 +1311,7 @@ export const initAdmin = ({ formatMessage }) => {
         if (linkEl) {
           linkEl.textContent = entry.title;
           if (resolvedEventId && entry.action !== 'delete') {
-            linkEl.href = `./event-card.html?id=${encodeURIComponent(resolvedEventId)}`;
+            linkEl.href = `./event-card.html?id=${encodeURIComponent(resolvedEventId)}&admin=1`;
           } else {
             linkEl.removeAttribute('href');
             linkEl.setAttribute('aria-disabled', 'true');
@@ -1785,8 +1785,12 @@ export const initAdmin = ({ formatMessage }) => {
           sendArchiveAction(eventId, 'delete').then(loadModerationQueue);
           return;
         }
+        if (target.dataset.action === 'edit-archive' && eventId) {
+          window.location.href = `./new-event.html?id=${encodeURIComponent(eventId)}`;
+          return;
+        }
         if (eventId) {
-          window.location.href = `./event-card.html?id=${encodeURIComponent(eventId)}`;
+          window.location.href = `./event-card.html?id=${encodeURIComponent(eventId)}&admin=1`;
         }
       });
     }
@@ -1801,7 +1805,7 @@ export const initAdmin = ({ formatMessage }) => {
         const eventId = row.dataset.eventId || '';
         const action = row.dataset.action || '';
         if (!eventId || action === 'delete') return;
-        window.location.href = `./event-card.html?id=${encodeURIComponent(eventId)}`;
+        window.location.href = `./event-card.html?id=${encodeURIComponent(eventId)}&admin=1`;
       });
     }
 

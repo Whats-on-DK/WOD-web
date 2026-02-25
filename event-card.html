@@ -75,6 +75,31 @@
                   <button class="btn ghost" type="button" data-action="admin-restore" data-i18n="admin_action_restore" hidden>Відновити</button>
                   <button class="btn ghost" type="button" data-action="admin-delete" data-i18n="admin_action_delete">Видалити</button>
                 </div>
+                <div class="event-admin__recommended" data-admin-recommended hidden>
+                  <label class="event-admin__field">
+                    <span>Recommended</span>
+                    <select data-recommended-duration>
+                      <option value="3d">3 days</option>
+                      <option value="7d">7 days</option>
+                      <option value="14d">14 days</option>
+                      <option value="until_event_end">Until event ends</option>
+                    </select>
+                  </label>
+                  <label class="event-admin__field">
+                    <span>Position</span>
+                    <input type="number" min="1" max="6" value="1" data-recommended-position />
+                  </label>
+                  <div class="event-admin__recommended-actions">
+                    <button class="btn ghost" type="button" data-action="recommended-save">Save</button>
+                    <button class="btn ghost" type="button" data-action="recommended-remove">Remove</button>
+                    <button class="btn ghost" type="button" data-action="recommended-manage">Manage slots</button>
+                  </div>
+                  <p class="event-admin__recommended-status" data-recommended-status role="status"></p>
+                </div>
+                <div class="event-admin__slots" data-recommended-slots hidden>
+                  <h3>Recommended slots</h3>
+                  <div class="event-admin__slots-list" data-recommended-slots-list></div>
+                </div>
               </div>
             </header>
             <img class="event-hero" data-event-image alt="" hidden />

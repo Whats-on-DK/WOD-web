@@ -1,6 +1,7 @@
 import { ADMIN_SESSION_KEY, getIdentityToken, hasAdminRole } from './auth.js';
 import { isArchivedEvent } from './event-status.mjs';
 import { normalizeEventLanguage } from './language.mjs';
+import { resolveAdminSession } from './admin-session.mjs';
 import {
   buildLocalEventId,
   fetchMergedLocalEvents,
@@ -642,7 +643,37 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
   const params = new URLSearchParams(window.location.search);
   const eventIdParam = params.get('id');
   if (eventIdParam) {
-    findMergedEventById(eventIdParam)
+    const loadEditableEvent = async () => {
+      const forceServerless = new URLSearchParams(window.location.search).get('serverless') === '1';
+      const isLocalHost =
+        !forceServerless && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+      if (!isLocalHost) {
+        const localAdmin = isAdminBypass();
+        const isAdmin = localAdmin || (await resolveAdminSession({
+          hasLocalSession: localAdmin,
+          getIdentity: async () => window.netlifyIdentity || null,
+          timeoutMs: 900
+        }));
+        if (isAdmin) {
+          const headers = {};
+          const token = await getIdentityToken();
+          if (token) headers.Authorization = `Bearer ${token}`;
+          const response = await fetch(
+            `/.netlify/functions/admin-event?id=${encodeURIComponent(eventIdParam)}`,
+            { headers }
+          );
+          if (response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            if (payload?.ok && payload?.event) {
+              return payload.event;
+            }
+          }
+        }
+      }
+      return findMergedEventById(eventIdParam);
+    };
+
+    loadEditableEvent()
       .then((eventData) => {
         if (!eventData) return;
         editingEventId = eventData.id;

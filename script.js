@@ -37,6 +37,7 @@ import {
   getPublicPartners,
   normalizePartnerSlug
 } from './modules/partners.mjs';
+import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
 
 (async () => {
   const header = document.querySelector('.site-header');
@@ -60,6 +61,7 @@ import {
   const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1']);
   const queryParams = new URLSearchParams(window.location.search);
   const forceServerless = queryParams.get('serverless') === '1';
+  const highlightsMode = queryParams.get('highlights') === 'weekly' ? 'weekly' : 'recommended';
   const hasServerlessSupport = forceServerless || !LOCAL_HOSTNAMES.has(window.location.hostname);
   const isLocalHost = !forceServerless && LOCAL_HOSTNAMES.has(window.location.hostname);
   const hasLocalAdminSession = () => {
@@ -350,6 +352,14 @@ import {
   const fetchPublicPartners = async () => {
     const payload = await fetchJson('/.netlify/functions/public-partners');
     return Array.isArray(payload) ? payload : [];
+  };
+
+  const fetchPublicRecommended = async () => {
+    const payload = await fetchJson('/.netlify/functions/public-recommended');
+    if (payload?.ok && Array.isArray(payload.recommended)) {
+      return payload.recommended;
+    }
+    return [];
   };
 
   const fetchPublicPartnerBySlug = async (slug) => {
@@ -1487,6 +1497,66 @@ import {
       getLocalizedCity: (value) => getLocalizedCity(value)
     };
 
+    const getRecommendedCta = (event) => {
+      const detailUrl = `event-card.html?id=${encodeURIComponent(event.id)}`;
+      const ticketUrl = String(event.registrationUrl || event.ticketUrl || '').trim();
+      if (event.priceType !== 'free') {
+        return {
+          label: formatMessage('ticket_cta', {}) || 'Квитки',
+          href: ticketUrl || '#'
+        };
+      }
+      if (ticketUrl) {
+        return {
+          label: formatMessage('register_cta', {}) || 'Реєстрація',
+          href: ticketUrl
+        };
+      }
+      return {
+        label: formatMessage('cta_details', {}) || 'Детальніше',
+        href: detailUrl
+      };
+    };
+
+    const renderRecommended = (recommendedList) => {
+      if (!highlightsTrack) return;
+      const list = Array.isArray(recommendedList)
+        ? [...recommendedList]
+            .sort((a, b) => Number(a.position || 0) - Number(b.position || 0))
+            .slice(0, MAX_RECOMMENDED_SLOTS)
+        : [];
+      if (!list.length) {
+        highlightsTrack.classList.add('highlights__track--empty');
+        highlightsTrack.innerHTML = `
+          <div class="highlights__empty">
+            <p class="highlights__empty-title">Поки немає рекомендованих подій.</p>
+            <p class="highlights__empty-text">Перегляньте каталог або поверніться трохи пізніше.</p>
+          </div>
+        `;
+        scheduleHighlightsControls();
+        return;
+      }
+
+      highlightsTrack.classList.remove('highlights__track--empty');
+      highlightsTrack.innerHTML = list
+        .map((event) => {
+          const cta = getRecommendedCta(event);
+          const title = getLocalizedEventTitle(event);
+          const city = getLocalizedCity(event.city, event);
+          const dateLabel = formatShortDate(event.start);
+          const detailUrl = `event-card.html?id=${encodeURIComponent(event.id)}`;
+          return `
+            <article class="highlights__card highlights__card--recommended" data-recommended-id="${event.id}">
+              <h3><a href="${detailUrl}">${title}</a></h3>
+              <p class="highlights__recommended-meta">${dateLabel}${city ? ` · ${city}` : ''}</p>
+              <a class="event-card__cta" href="${cta.href}" rel="noopener">${cta.label}</a>
+            </article>
+          `;
+        })
+        .join('');
+      scheduleHighlightsControls();
+    };
+
     const renderHighlights = (list) => {
       if (!highlightsTrack) return;
       const now = new Date();
@@ -1641,7 +1711,9 @@ import {
       console.log('renderApp page', currentPage, 'first event', list[0]?.title);
     }
       renderEvents(list);
-      renderHighlights(state.events);
+      if (highlightsMode === 'weekly') {
+        renderHighlights(state.events);
+      }
       const liveEvents = getLiveEvents(state.events);
       const liveKey = liveEvents.map((event) => event.id).join('|');
       if (liveKey !== liveRotationKey) {
@@ -2789,6 +2861,20 @@ import {
       renderPartners(partners);
     };
 
+    const loadRecommended = async () => {
+      if (!highlightsTrack) return;
+      if (highlightsMode === 'weekly') {
+        renderHighlights(state.events);
+        return;
+      }
+      try {
+        const recommended = await fetchPublicRecommended();
+        renderRecommended(recommended);
+      } catch (error) {
+        renderRecommended([]);
+      }
+    };
+
     if (partnersPrev instanceof HTMLButtonElement) {
       partnersPrev.addEventListener('click', () => {
         partnersIndex -= 1;
@@ -2842,6 +2928,7 @@ import {
     }
 
     queueMicrotask(loadEvents);
+    queueMicrotask(loadRecommended);
     queueMicrotask(loadPartners);
   }
 
@@ -2885,6 +2972,15 @@ import {
   const adminArchiveButton = document.querySelector('[data-action="admin-archive"]');
   const adminRestoreButton = document.querySelector('[data-action="admin-restore"]');
   const adminDeleteButton = document.querySelector('[data-action="admin-delete"]');
+  const adminRecommendedPanel = document.querySelector('[data-admin-recommended]');
+  const recommendedDurationSelect = document.querySelector('[data-recommended-duration]');
+  const recommendedPositionInput = document.querySelector('[data-recommended-position]');
+  const recommendedStatusEl = document.querySelector('[data-recommended-status]');
+  const recommendedSlotsContainer = document.querySelector('[data-recommended-slots]');
+  const recommendedSlotsList = document.querySelector('[data-recommended-slots-list]');
+  const recommendedSaveButton = document.querySelector('[data-action="recommended-save"]');
+  const recommendedRemoveButton = document.querySelector('[data-action="recommended-remove"]');
+  const recommendedManageButton = document.querySelector('[data-action="recommended-manage"]');
   const setAdminArchiveState = (archived) => {
     if (adminArchivedBadge) adminArchivedBadge.hidden = !archived;
     if (adminArchiveButton) adminArchiveButton.hidden = archived;
@@ -2896,6 +2992,22 @@ import {
     setAdminArchiveState(archived);
   };
   let activeEventData = null;
+  let recommendedSlotsState = [];
+
+  const setRecommendedStatus = (message, isError = false) => {
+    if (!(recommendedStatusEl instanceof HTMLElement)) return;
+    recommendedStatusEl.textContent = message || '';
+    recommendedStatusEl.dataset.state = isError ? 'error' : 'ok';
+  };
+
+  const getRecommendedAuthHeaders = async () => {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = await getIdentityToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    return headers;
+  };
 
   const updateDescriptionToggle = (text) => {
     if (!eventDescriptionEl || !eventDescriptionToggle) return;
@@ -3424,6 +3536,90 @@ import {
       activeEventData = nextEventData;
     }
     syncAdminArchiveState();
+    syncRecommendedEventState();
+  };
+
+  const renderRecommendedSlots = () => {
+    if (!(recommendedSlotsList instanceof HTMLElement)) return;
+    const slots = Array.isArray(recommendedSlotsState) ? recommendedSlotsState : [];
+    if (!slots.length) {
+      recommendedSlotsList.innerHTML = '<p class="event-admin__recommended-status">No active recommended events.</p>';
+      return;
+    }
+    recommendedSlotsList.innerHTML = slots
+      .map((slot, index) => {
+        const eventId = String(slot?.event?.id || '');
+        const title = String(slot?.event?.title || 'Untitled event');
+        const position = Number(slot?.slotPosition || index + 1);
+        const upDisabled = index === 0 ? 'disabled' : '';
+        const downDisabled = index === slots.length - 1 ? 'disabled' : '';
+        return `
+          <div class="event-admin__slot-row" data-slot-event-id="${eventId}">
+            <span>${position}. ${title}</span>
+            <div class="event-admin__slot-actions">
+              <button class="btn ghost" type="button" data-action="recommended-up" ${upDisabled}>Up</button>
+              <button class="btn ghost" type="button" data-action="recommended-down" ${downDisabled}>Down</button>
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+  };
+
+  const syncRecommendedEventState = () => {
+    if (!(recommendedRemoveButton instanceof HTMLButtonElement)) return;
+    if (!(recommendedPositionInput instanceof HTMLInputElement)) return;
+    if (!activeEventData?.id) {
+      recommendedRemoveButton.disabled = true;
+      return;
+    }
+    const activeId = String(activeEventData.id || '');
+    const existing = recommendedSlotsState.find((slot) => String(slot?.event?.id || '') === activeId);
+    if (existing) {
+      recommendedRemoveButton.disabled = false;
+      recommendedPositionInput.value = String(existing.slotPosition || 1);
+      if (recommendedDurationSelect instanceof HTMLSelectElement && existing.durationCode) {
+        recommendedDurationSelect.value = existing.durationCode;
+      }
+      setRecommendedStatus(
+        `Active in slot ${existing.slotPosition} until ${new Date(existing.effectiveUntilAt).toLocaleString('uk-UA')}`
+      );
+      return;
+    }
+    recommendedRemoveButton.disabled = true;
+    setRecommendedStatus('');
+  };
+
+  const fetchRecommendedAdminState = async () => {
+    if (!hasServerlessSupport || !hasAdminUiAccess()) return;
+    try {
+      const headers = await getRecommendedAuthHeaders();
+      const response = await fetch('/.netlify/functions/admin-recommended', { headers });
+      if (!response.ok) throw new Error('recommended_load_failed');
+      const payload = await response.json();
+      if (!payload?.ok) throw new Error(payload?.error || 'recommended_load_failed');
+      recommendedSlotsState = Array.isArray(payload.slots) ? payload.slots : [];
+      renderRecommendedSlots();
+      syncRecommendedEventState();
+    } catch (error) {
+      setRecommendedStatus('Failed to load recommended slots.', true);
+    }
+  };
+
+  const saveRecommendedOrder = async (order) => {
+    const headers = await getRecommendedAuthHeaders();
+    const response = await fetch('/.netlify/functions/admin-recommended', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ action: 'reorder', order })
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload?.ok === false) {
+      throw new Error(String(payload?.error || 'reorder_failed'));
+    }
+    recommendedSlotsState = Array.isArray(payload.slots) ? payload.slots : [];
+    renderRecommendedSlots();
+    syncRecommendedEventState();
   };
 
   if (document.body.classList.contains('event-page')) {
@@ -3647,8 +3843,104 @@ import {
         });
       });
     }
+    if (recommendedManageButton instanceof HTMLButtonElement) {
+      recommendedManageButton.addEventListener('click', () => {
+        if (!(recommendedSlotsContainer instanceof HTMLElement)) return;
+        recommendedSlotsContainer.hidden = !recommendedSlotsContainer.hidden;
+      });
+    }
+    if (recommendedSlotsList instanceof HTMLElement) {
+      recommendedSlotsList.addEventListener('click', async (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const row = target.closest('[data-slot-event-id]');
+        if (!row) return;
+        const eventId = String(row.getAttribute('data-slot-event-id') || '');
+        const current = [...recommendedSlotsState];
+        const index = current.findIndex((slot) => String(slot?.event?.id || '') === eventId);
+        if (index < 0) return;
+        if (target.dataset.action === 'recommended-up' && index > 0) {
+          [current[index - 1], current[index]] = [current[index], current[index - 1]];
+        } else if (target.dataset.action === 'recommended-down' && index < current.length - 1) {
+          [current[index], current[index + 1]] = [current[index + 1], current[index]];
+        } else {
+          return;
+        }
+        try {
+          await saveRecommendedOrder(current.map((slot) => String(slot?.event?.id || '')));
+          setRecommendedStatus('Slots order saved.');
+        } catch (error) {
+          setRecommendedStatus('Failed to save slots order.', true);
+        }
+      });
+    }
+    if (recommendedSaveButton instanceof HTMLButtonElement) {
+      recommendedSaveButton.addEventListener('click', async () => {
+        if (!activeEventData?.id) return;
+        if (!(recommendedDurationSelect instanceof HTMLSelectElement)) return;
+        if (!(recommendedPositionInput instanceof HTMLInputElement)) return;
+        const durationCode = String(recommendedDurationSelect.value || '3d');
+        const slotPosition = Math.max(1, Math.min(6, Number(recommendedPositionInput.value || '1')));
+        try {
+          const headers = await getRecommendedAuthHeaders();
+          const response = await fetch('/.netlify/functions/admin-recommended', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              action: 'place',
+              eventId: activeEventData.id,
+              durationCode,
+              slotPosition
+            })
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok || payload?.ok === false) {
+            const message =
+              payload?.error === 'max_slots_reached'
+                ? 'Maximum 6 active recommended events reached.'
+                : 'Failed to save recommended settings.';
+            setRecommendedStatus(message, true);
+            return;
+          }
+          recommendedSlotsState = Array.isArray(payload.slots) ? payload.slots : [];
+          renderRecommendedSlots();
+          syncRecommendedEventState();
+          setRecommendedStatus('Recommended settings saved.');
+        } catch (error) {
+          setRecommendedStatus('Failed to save recommended settings.', true);
+        }
+      });
+    }
+    if (recommendedRemoveButton instanceof HTMLButtonElement) {
+      recommendedRemoveButton.addEventListener('click', async () => {
+        if (!activeEventData?.id) return;
+        try {
+          const headers = await getRecommendedAuthHeaders();
+          const response = await fetch('/.netlify/functions/admin-recommended', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              action: 'remove',
+              eventId: activeEventData.id
+            })
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok || payload?.ok === false) {
+            setRecommendedStatus('Failed to remove recommended placement.', true);
+            return;
+          }
+          recommendedSlotsState = Array.isArray(payload.slots) ? payload.slots : [];
+          renderRecommendedSlots();
+          syncRecommendedEventState();
+          setRecommendedStatus('Recommended placement removed.');
+        } catch (error) {
+          setRecommendedStatus('Failed to remove recommended placement.', true);
+        }
+      });
+    }
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get('id');
+    const forceAdminContext = params.get('admin') === '1';
     const loadEventDetail = async () => {
       if (!eventId) {
         updateEventMeta();
@@ -3680,10 +3972,14 @@ import {
         return;
       }
       try {
-        if (isAdmin) {
+        if (isAdmin || forceAdminContext) {
+          if (adminRecommendedPanel instanceof HTMLElement) {
+            adminRecommendedPanel.hidden = false;
+          }
           const adminEvent = await fetchAdminEventById(eventId);
           if (adminEvent) {
             safeRenderEventDetail(adminEvent);
+            fetchRecommendedAdminState();
             return;
           }
         }
@@ -3694,7 +3990,7 @@ import {
         }
         window.location.replace('./404.html');
       } catch (error) {
-        if (!isAdmin) {
+        if (!isAdmin && !forceAdminContext) {
           window.location.replace('./404.html');
           return;
         }
@@ -3704,6 +4000,7 @@ import {
           return;
         }
         safeRenderEventDetail(adminEvent);
+        fetchRecommendedAdminState();
       }
     };
     refreshAdminData = () => loadEventDetail();

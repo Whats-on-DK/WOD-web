@@ -103,7 +103,7 @@ test('filters show only active tags and include all active cities', async ({ pag
       .filter(Boolean)
   );
 
-  await page.goto('/');
+  await page.goto('/?highlights=weekly');
   const advancedToggle = page.locator('[data-action="filters-advanced"]');
   await advancedToggle.click();
   await page.locator('[data-filters-tags-list] .filters__tag').first().waitFor();
@@ -150,7 +150,7 @@ test('highlights show online label for online events', async ({ page }) => {
     localStorage.setItem('wodDeletedEvents', JSON.stringify([]));
   });
 
-  await page.goto('/');
+  await page.goto('/?highlights=weekly');
   const highlightCard = page.locator('.highlights__card', { hasText: 'Online Workshop' });
   await expect(highlightCard).toBeVisible();
   await expect(highlightCard.locator('.highlights__city')).toContainText(/Онлайн/i);
@@ -201,7 +201,7 @@ test('highlights only include events through Sunday of current week', async ({ p
     localStorage.setItem('wodDeletedEvents', JSON.stringify([]));
   });
 
-  await page.goto('/');
+  await page.goto('/?highlights=weekly');
   await expect(page.locator('.highlights__card', { hasText: 'Sunday Event' })).toBeVisible();
   await expect(page.locator('.highlights__card', { hasText: 'Next Monday Event' })).toHaveCount(0);
 });

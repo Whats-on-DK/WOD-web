@@ -63,7 +63,7 @@ test('weekly highlights renders all events and arrows can reach last card', asyn
     route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
   );
 
-  await page.goto('/?serverless=1');
+  await page.goto('/?serverless=1&highlights=weekly');
   await expect(page.locator('.highlights__card')).toHaveCount(16);
 
   const nextButton = page.locator('.highlights__button[data-action="next"]');
@@ -85,7 +85,7 @@ test('weekly highlights empty state is centered and arrows are hidden', async ({
     route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
   );
 
-  await page.goto('/?serverless=1');
+  await page.goto('/?serverless=1&highlights=weekly');
   const empty = page.locator('.highlights__empty');
   await expect(empty).toBeVisible();
   await expect(page.locator('.highlights__button[data-action="prev"]')).toBeHidden();
@@ -127,6 +127,6 @@ test('catalog shows "Онлайн" for online events even without city', async (
     route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
   );
 
-  await page.goto('/?serverless=1');
+  await page.goto('/?serverless=1&highlights=weekly');
   await expect(page.locator('[data-testid="event-card"] .event-card__location').first()).toHaveText('Онлайн');
 });

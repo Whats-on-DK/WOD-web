@@ -126,8 +126,14 @@ test('share-event redirects non-crawler requests to event page', () => {
 test('share-event keeps OG HTML response for crawler requests', () => {
   const content = readFile('../../netlify/functions/share-event.ts');
   assert.match(content, /facebookexternalhit/i);
+  assert.match(content, /instagram/i);
   assert.match(content, /linkedinbot/i);
   assert.match(content, /<meta property="og:title"/);
   assert.match(content, /<meta property="og:image"/);
   assert.match(content, /<meta property="og:url"/);
+});
+
+test('admin archive template has edit action for archived events', () => {
+  const content = readFile('../../admin-page.html');
+  assert.match(content, /data-action=\"edit-archive\"/);
 });

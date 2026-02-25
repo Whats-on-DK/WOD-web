@@ -39,10 +39,13 @@ const buildShareUrl = (event: HandlerEvent, origin: string) => {
 const SHARE_BOT_UA_PATTERNS = [
   /facebookexternalhit/i,
   /facebot/i,
+  /meta-externalagent/i,
+  /meta-inspector/i,
   /linkedinbot/i,
   /twitterbot/i,
   /telegrambot/i,
   /whatsapp/i,
+  /instagram/i,
   /slackbot/i,
   /discordbot/i,
   /skypeuripreview/i,
@@ -87,6 +90,14 @@ const fetchPublishedEvent = async (id: string) => {
   return Array.isArray(rows) && rows.length ? rows[0] : null;
 };
 
+const toAbsoluteImageUrl = (image: string, origin: string) => {
+  const value = String(image || '').trim();
+  if (!value || value.startsWith('data:')) return DEFAULT_IMAGE;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith('/')) return `${origin}${value}`;
+  return `${origin}/${value.replace(/^\.?\//, '')}`;
+};
+
 export const handler = async (event: HandlerEvent) => {
   const id = String(event.queryStringParameters?.id || '').trim();
   const fallbackTitle = String(event.queryStringParameters?.t || '').trim();
@@ -117,8 +128,10 @@ export const handler = async (event: HandlerEvent) => {
     const title = `${rawTitle} — What's on DK?`;
     const description =
       String(row?.description || fallbackDescription || '').trim() || 'Деталі події в Данії.';
-    const image =
-      String(row?.images?.[0] || row?.image_url || fallbackImage || '').trim() || DEFAULT_IMAGE;
+    const image = toAbsoluteImageUrl(
+      String(row?.images?.[0] || row?.image_url || fallbackImage || '').trim() || DEFAULT_IMAGE,
+      origin
+    );
 
     const html = `<!doctype html>
 <html lang="uk">
@@ -133,7 +146,7 @@ export const handler = async (event: HandlerEvent) => {
     <meta property="og:image:secure_url" content="${escapeHtml(image)}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:url" content="${escapeHtml(shareUrl)}" />
+    <meta property="og:url" content="${escapeHtml(eventUrl)}" />
     <meta property="og:locale" content="uk_UA" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(title)}" />
@@ -168,7 +181,7 @@ export const handler = async (event: HandlerEvent) => {
     <meta property="og:description" content="Деталі події в Данії." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="${escapeHtml(DEFAULT_IMAGE)}" />
-    <meta property="og:url" content="${escapeHtml(shareUrl)}" />
+    <meta property="og:url" content="${escapeHtml(eventUrl)}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Подія — What's on DK?" />
     <meta name="twitter:description" content="Деталі події в Данії." />
