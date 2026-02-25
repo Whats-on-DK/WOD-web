@@ -32,6 +32,10 @@ const syncRecommended = async () => {
     method: 'POST',
     body: {
       p_action: 'sync',
+      p_event_ref: null,
+      p_duration_code: null,
+      p_slot_position: null,
+      p_order_refs: null,
       p_actor: 'system',
       p_actor_role: 'system'
     }

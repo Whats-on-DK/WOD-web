@@ -36,6 +36,10 @@ const syncRecommended = async () => {
     method: 'POST',
     body: {
       p_action: 'sync',
+      p_event_ref: null,
+      p_duration_code: null,
+      p_slot_position: null,
+      p_order_refs: null,
       p_actor: 'system',
       p_actor_role: 'system'
     }
@@ -140,6 +144,9 @@ export const handler = async (event: HandlerEvent, context: HandlerContext) => {
         method: 'POST',
         body: {
           p_action: 'reorder',
+          p_event_ref: null,
+          p_duration_code: null,
+          p_slot_position: null,
           p_order_refs: order,
           p_actor: actor,
           p_actor_role: actorRole
@@ -167,6 +174,9 @@ export const handler = async (event: HandlerEvent, context: HandlerContext) => {
         body: {
           p_action: 'remove',
           p_event_ref: eventId,
+          p_duration_code: null,
+          p_slot_position: null,
+          p_order_refs: null,
           p_actor: actor,
           p_actor_role: actorRole
         }
@@ -197,6 +207,7 @@ export const handler = async (event: HandlerEvent, context: HandlerContext) => {
           p_event_ref: eventId,
           p_duration_code: durationCode,
           p_slot_position: Number.isFinite(slotPosition) ? slotPosition : 1,
+          p_order_refs: null,
           p_actor: actor,
           p_actor_role: actorRole
         }
