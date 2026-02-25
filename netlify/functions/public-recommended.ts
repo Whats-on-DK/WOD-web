@@ -16,6 +16,7 @@ const mapRecommendedEvent = (slot: RecommendedSlot, event: any) => ({
   title: event?.title || 'Untitled event',
   start: event?.start_at || '',
   end: event?.end_at || null,
+  imageUrl: event?.image_url || '',
   city: event?.city || '',
   format: event?.format || '',
   address: event?.address || '',
@@ -65,7 +66,7 @@ export const handler = async () => {
               id: `in.(${eventIds.join(',')})`,
               status: 'eq.published',
               select:
-                'id,external_id,title,start_at,end_at,city,format,address,venue,registration_url,price_type'
+                'id,external_id,title,start_at,end_at,image_url,city,format,address,venue,registration_url,price_type'
             }
           })) as any[])
         : [];

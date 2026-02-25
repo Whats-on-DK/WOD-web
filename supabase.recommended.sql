@@ -14,7 +14,11 @@ create table if not exists recommended_slots (
   -- Allow temporary high positions during transactional reordering.
   -- Final active positions are always normalized back to 1..6 by recommended_manage().
   constraint recommended_slots_position_chk check (
-    (slot_position between 1 and 6) or slot_position >= 100
+    -- Active persisted positions are 1..6.
+    -- Temporary values can be used inside transactional reorder/shift steps.
+    (slot_position between 1 and 6)
+    or (slot_position between -999 and -1)
+    or slot_position >= 100
   ),
   constraint recommended_slots_event_unique unique (event_id),
   constraint recommended_slots_position_unique unique (slot_position)
@@ -25,7 +29,11 @@ alter table recommended_slots
   drop constraint if exists recommended_slots_position_chk;
 alter table recommended_slots
   add constraint recommended_slots_position_chk
-  check ((slot_position between 1 and 6) or slot_position >= 100);
+  check (
+    (slot_position between 1 and 6)
+    or (slot_position between -999 and -1)
+    or slot_position >= 100
+  );
 
 create table if not exists recommended_history (
   id uuid primary key default gen_random_uuid(),

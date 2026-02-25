@@ -1503,7 +1503,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       if (event.priceType !== 'free') {
         return {
           label: formatMessage('ticket_cta', {}) || 'Квитки',
-          href: ticketUrl || '#'
+          href: ticketUrl || detailUrl
         };
       }
       if (ticketUrl) {
@@ -1540,16 +1540,46 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       highlightsTrack.classList.remove('highlights__track--empty');
       highlightsTrack.innerHTML = list
         .map((event) => {
-          const cta = getRecommendedCta(event);
           const title = getLocalizedEventTitle(event);
-          const city = getLocalizedCity(event.city, event);
+          const formatValue = String(event.format || '').toLowerCase();
+          const hasOnlineLocation = [event.address, event.venue].some((value) =>
+            /zoom|google meet|meet\.google|teams\.microsoft|teams|online|webinar/i.test(
+              String(value || '')
+            )
+          );
+          const isOnline = formatValue.includes('online') || hasOnlineLocation;
+          const city = isOnline
+            ? formatMessage('online', {}) || 'Онлайн'
+            : getLocalizedCity(event.city, event);
           const dateLabel = formatShortDate(event.start);
           const detailUrl = `event-card.html?id=${encodeURIComponent(event.id)}`;
+          const cta = getRecommendedCta(event);
+          const image =
+            (Array.isArray(event.images) && event.images.length ? event.images[0] : '') ||
+            event.imageUrl ||
+            event.image_url ||
+            '';
+          const imageMarkup = image
+            ? `<img class="highlights__image" src="${image}" alt="${title}" loading="lazy" width="360" height="220" />`
+            : '<div class="highlights__image highlights__image--placeholder"></div>';
+
           return `
             <article class="highlights__card highlights__card--recommended" data-recommended-id="${event.id}">
-              <h3><a href="${detailUrl}">${title}</a></h3>
-              <p class="highlights__recommended-meta">${dateLabel}${city ? ` · ${city}` : ''}</p>
-              <a class="event-card__cta" href="${cta.href}" rel="noopener">${cta.label}</a>
+              <a class="highlights__card-link" href="${detailUrl}">
+                <div class="highlights__media">
+                  ${imageMarkup}
+                  <div class="highlights__overlay">
+                    <div class="highlights__overlay-content">
+                      <span class="highlights__date">${dateLabel}</span>
+                      <div class="highlights__title-wrap">
+                        <h3>${title}</h3>
+                      </div>
+                      <span class="highlights__city">${city}</span>
+                    </div>
+                  </div>
+                </div>
+              </a>
+              <a class="event-card__cta highlights__cta" href="${cta.href}" rel="noopener">${cta.label}</a>
             </article>
           `;
         })

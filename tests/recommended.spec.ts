@@ -24,7 +24,7 @@ const makeEvents = () =>
     priceMax: index % 3 === 0 ? 180 : null,
     ticketUrl: index % 2 === 0 ? 'https://tickets.example.com' : '',
     organizerId: '',
-    images: [],
+    images: [`https://cdn.example.com/recommended-${index + 1}.jpg`],
     status: 'published',
     language: 'uk',
     contactPerson: {
@@ -56,6 +56,7 @@ const buildRecommendedPayload = (state: RecommendedState, events: any[]) =>
         venue: event.venue,
         registrationUrl: event.ticketUrl,
         priceType: event.priceType,
+        imageUrl: event.images?.[0] || '',
         position: index + 1,
         chosenUntilAt: meta?.chosenUntilAt || new Date(Date.now() + 3 * 86400000).toISOString(),
         effectiveUntilAt: meta?.effectiveUntilAt || new Date(Date.now() + 3 * 86400000).toISOString()
@@ -229,8 +230,14 @@ test('admin sets event as recommended and it appears on homepage', async ({ page
   await expect(page.locator('[data-recommended-status]')).toContainText(/saved/i);
 
   await page.goto('/?serverless=1');
-  await expect(page.locator('.highlights__card', { hasText: 'Recommended Event 1' })).toBeVisible();
-  await expect(page.locator('.highlights__card .event-card__cta', { hasText: /Квитки|Реєстрація|Детальніше/ }).first()).toBeVisible();
+  const recommendedCard = page.locator('.highlights__card', { hasText: 'Recommended Event 1' }).first();
+  await expect(recommendedCard).toBeVisible();
+  await expect(recommendedCard.locator('.highlights__card-link')).toHaveAttribute(
+    'href',
+    /event-card\.html\?id=evt-rec-1/
+  );
+  await expect(recommendedCard.locator('.highlights__image')).toBeVisible();
+  await expect(recommendedCard.locator('.event-card__cta', { hasText: /Квитки|Реєстрація|Детальніше/ })).toBeVisible();
 });
 
 test('recommended reorder with up/down persists after refresh', async ({ page }) => {

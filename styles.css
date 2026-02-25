@@ -1622,6 +1622,16 @@ body:not(.is-admin) [data-admin-controls] {
   align-content: start;
 }
 
+.highlights__card-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.highlights__card-link:hover,
+.highlights__card-link:focus-visible {
+  color: inherit;
+}
+
 .highlights__card--recommended h3 a {
   color: inherit;
   text-decoration: none;
@@ -1631,6 +1641,10 @@ body:not(.is-admin) [data-admin-controls] {
   margin: 0;
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.highlights__cta {
+  margin-top: 2px;
 }
 
 .highlights__card h3 {
