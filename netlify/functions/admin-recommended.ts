@@ -28,7 +28,11 @@ const getActorRole = (roles: string[]) => (roles.includes('super_admin') ? 'supe
 
 const isMigrationMissingError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error || '');
-  return message.includes('PGRST202') || message.includes('recommended_manage');
+  return (
+    message.includes('PGRST202') ||
+    message.includes('Could not find the function public.recommended_manage') ||
+    message.includes('function public.recommended_manage')
+  );
 };
 
 const syncRecommended = async () => {
