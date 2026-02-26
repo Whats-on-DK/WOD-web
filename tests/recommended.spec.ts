@@ -219,6 +219,7 @@ const configureRecommendedApi = async (
 };
 
 test('admin sets event as recommended and it appears on homepage', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
   await enableAdminSession(page);
   await configureRecommendedApi(page);
 
@@ -234,86 +235,136 @@ test('admin sets event as recommended and it appears on homepage', async ({ page
   await expect(page.locator('.highlights__button[data-action="next"]')).toBeHidden();
   const recommendedCard = page.locator('.highlights__card', { hasText: 'Recommended Event 1' }).first();
   await expect(recommendedCard).toBeVisible();
-  await expect(recommendedCard.locator('.highlights__card-link')).toHaveAttribute(
+  await expect(recommendedCard.locator('.recommended-poster__detail-link')).toHaveAttribute(
     'href',
     /event-card\.html\?id=evt-rec-1/
   );
-  const imageFrame = recommendedCard.locator('.event-image-frame--recommended').first();
-  await expect(imageFrame).toBeVisible();
-  await expect(recommendedCard.locator('.event-image-frame__bg')).toBeVisible();
-  await expect(recommendedCard.locator('.event-image-frame__img')).toBeVisible();
-  await expect(recommendedCard.locator('.event-image-frame--recommended .highlights__overlay')).toHaveCount(0);
-  await expect(recommendedCard.locator('.recommended-card__title')).toBeVisible();
-  const frameStyles = await imageFrame.evaluate((element) => {
+  const poster = recommendedCard.locator('.recommended-poster').first();
+  await expect(poster).toBeVisible();
+  await expect(recommendedCard.locator('.recommended-poster__img')).toBeVisible();
+  const frameStyles = await poster.evaluate((element) => {
     const frame = window.getComputedStyle(element as HTMLElement);
-    const bg = window.getComputedStyle(
-      (element as HTMLElement).querySelector('.event-image-frame__bg') as HTMLElement
-    );
     const img = window.getComputedStyle(
-      (element as HTMLElement).querySelector('.event-image-frame__img') as HTMLElement
+      (element as HTMLElement).querySelector('.recommended-poster__img') as HTMLElement
+    );
+    const overlay = window.getComputedStyle(
+      (element as HTMLElement).querySelector('.recommended-poster__overlay') as HTMLElement
     );
     return {
       frameOverflow: frame.overflow,
       frameRadius: frame.borderTopLeftRadius,
-      bgPosition: bg.position,
-      imgObjectFit: img.objectFit
+      frameAspectRatio: frame.aspectRatio,
+      imgObjectFit: img.objectFit,
+      overlayOpacity: overlay.opacity
     };
   });
   expect(frameStyles.frameOverflow).toBe('hidden');
   expect(parseFloat(frameStyles.frameRadius)).toBeGreaterThan(0);
-  expect(frameStyles.bgPosition).toBe('absolute');
-  expect(frameStyles.imgObjectFit).toBe('contain');
-  const cta = recommendedCard.locator('.recommended-card__cta', { hasText: /Квитки|Реєстрація|Детальніше/ }).first();
+  expect(frameStyles.frameAspectRatio).toContain('2 / 3');
+  expect(frameStyles.imgObjectFit).toBe('cover');
+  expect(frameStyles.overlayOpacity).toBe('0');
+
+  await recommendedCard.locator('.recommended-poster__detail-link').focus();
+  await expect
+    .poll(async () => {
+      return Number(
+        await recommendedCard.locator('.recommended-poster__overlay').evaluate((element) => {
+          return window.getComputedStyle(element as HTMLElement).opacity;
+        })
+      );
+    })
+    .toBeGreaterThan(0.2);
+
+  const cta = recommendedCard
+    .locator('.recommended-poster__cta', { hasText: /Квитки|Реєстрація|Детальніше/ })
+    .first();
   await expect(cta).toBeVisible();
-  const ctaWidths = await recommendedCard.evaluate((element) => {
-    const cardRect = (element as HTMLElement).getBoundingClientRect();
-    const ctaRect = ((element as HTMLElement).querySelector('.recommended-card__cta') as HTMLElement).getBoundingClientRect();
-    return { cardWidth: cardRect.width, ctaWidth: ctaRect.width };
-  });
-  expect(ctaWidths.ctaWidth).toBeLessThan(ctaWidths.cardWidth * 0.75);
+  await expect(cta).toHaveAttribute('href', /tickets\.example\.com|event-card\.html/);
 });
 
-test('recommended marquee auto-loops with clone and pauses on hover', async ({ page }) => {
+test('recommended desktop overlay is hidden by default and visible on focus-within', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
   await configureRecommendedApi(page, { initialOrder: ['evt-rec-1', 'evt-rec-2', 'evt-rec-3', 'evt-rec-4'] });
 
   await page.goto('/?serverless=1');
-  const marquee = page.locator('.recommended-marquee--animated').first();
-  await expect(marquee).toBeVisible();
-  await expect(page.locator('.recommended-marquee__track--clone')).toHaveCount(1);
+  const card = page.locator('.highlights__card--recommended').first();
+  await expect(card).toBeVisible();
+  const overlay = card.locator('.recommended-poster__overlay');
+  await expect(overlay).toHaveCount(1);
 
-  const runningState = await marquee.evaluate((element) => {
-    const inner = (element as HTMLElement).querySelector('.recommended-marquee__inner') as HTMLElement;
-    const styles = window.getComputedStyle(inner);
-    return { animationName: styles.animationName, playState: styles.animationPlayState };
+  const initial = await overlay.evaluate((element) => {
+    const styles = window.getComputedStyle(element as HTMLElement);
+    return { opacity: styles.opacity, visibility: styles.visibility };
   });
-  expect(runningState.animationName).not.toBe('none');
-  expect(runningState.playState).toBe('running');
+  expect(initial.opacity).toBe('0');
+  expect(initial.visibility).toBe('hidden');
 
-  await marquee.hover();
-  const pausedState = await marquee.evaluate((element) => {
-    const inner = (element as HTMLElement).querySelector('.recommended-marquee__inner') as HTMLElement;
-    return window.getComputedStyle(inner).animationPlayState;
-  });
-  expect(pausedState).toBe('paused');
+  await card.locator('.recommended-poster__detail-link').focus();
+  await expect
+    .poll(async () => {
+      const focused = await overlay.evaluate((element) => {
+        const styles = window.getComputedStyle(element as HTMLElement);
+        return { opacity: styles.opacity, visibility: styles.visibility };
+      });
+      return Number(focused.opacity);
+    })
+    .toBeGreaterThan(0.2);
+  await expect
+    .poll(async () => {
+      const focused = await overlay.evaluate((element) => {
+        return window.getComputedStyle(element as HTMLElement).visibility;
+      });
+      return focused;
+    })
+    .toBe('visible');
 });
 
-test('recommended with three or fewer items stays static and does not clone', async ({ page }) => {
-  await configureRecommendedApi(page, { initialOrder: ['evt-rec-1', 'evt-rec-2', 'evt-rec-3'] });
+test('recommended mobile uses snap carousel and autoplay advances slides', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await configureRecommendedApi(page, { initialOrder: ['evt-rec-1', 'evt-rec-2', 'evt-rec-3', 'evt-rec-4'] });
 
   await page.goto('/?serverless=1');
-  await expect(page.locator('.recommended-marquee--static')).toBeVisible();
-  await expect(page.locator('.recommended-marquee--animated')).toHaveCount(0);
-  await expect(page.locator('.recommended-marquee__track--clone')).toHaveCount(0);
+  const strip = page.locator('.recommended-strip').first();
+  await expect(strip).toBeVisible();
+
+  const snapType = await strip.evaluate((element) => {
+    return window.getComputedStyle(element as HTMLElement).scrollSnapType;
+  });
+  expect(snapType).toContain('x');
+
+  const widths = await page.evaluate(() => {
+    const stripEl = document.querySelector('.recommended-strip') as HTMLElement;
+    const cardEl = document.querySelector('.highlights__card--recommended') as HTMLElement;
+    return {
+      stripWidth: stripEl.getBoundingClientRect().width,
+      cardWidth: cardEl.getBoundingClientRect().width
+    };
+  });
+  expect(Math.abs(widths.cardWidth - widths.stripWidth)).toBeLessThan(24);
+
+  const overlayDisplay = await page
+    .locator('.highlights__card--recommended .recommended-poster__overlay')
+    .first()
+    .evaluate((element) => window.getComputedStyle(element as HTMLElement).display);
+  expect(overlayDisplay).toBe('none');
+
+  const initialScroll = await strip.evaluate((element) => (element as HTMLElement).scrollLeft);
+  await page.waitForTimeout(5600);
+  const nextScroll = await strip.evaluate((element) => (element as HTMLElement).scrollLeft);
+  expect(nextScroll).toBeGreaterThan(initialScroll + 5);
 });
 
-test('recommended marquee is disabled when prefers-reduced-motion is enabled', async ({ page }) => {
+test('recommended mobile autoplay is disabled when prefers-reduced-motion is enabled', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await configureRecommendedApi(page, { initialOrder: ['evt-rec-1', 'evt-rec-2', 'evt-rec-3', 'evt-rec-4'] });
 
   await page.goto('/?serverless=1');
-  await expect(page.locator('.recommended-marquee--static')).toBeVisible();
-  await expect(page.locator('.recommended-marquee--animated')).toHaveCount(0);
-  await expect(page.locator('.recommended-marquee__track--clone')).toHaveCount(0);
+  const strip = page.locator('.recommended-strip').first();
+  const initialScroll = await strip.evaluate((element) => (element as HTMLElement).scrollLeft);
+  await page.waitForTimeout(5600);
+  const nextScroll = await strip.evaluate((element) => (element as HTMLElement).scrollLeft);
+  expect(Math.abs(nextScroll - initialScroll)).toBeLessThan(2);
 });
 
 test('recommended CTA labels follow paid/registration/details logic', async ({ page }) => {
@@ -325,9 +376,9 @@ test('recommended CTA labels follow paid/registration/details logic', async ({ p
   const card2 = page.locator('.highlights__card', { hasText: 'Recommended Event 2' }).first();
   const card3 = page.locator('.highlights__card', { hasText: 'Recommended Event 3' }).first();
 
-  await expect(card1.locator('.recommended-card__cta')).toHaveText(/Квитки/i);
-  await expect(card2.locator('.recommended-card__cta')).toHaveText(/Детальніше/i);
-  await expect(card3.locator('.recommended-card__cta')).toHaveText(/Реєстрація/i);
+  await expect(card1.locator('.recommended-poster__cta')).toHaveText(/Квитки/i);
+  await expect(card2.locator('.recommended-poster__cta')).toHaveText(/Детальніше/i);
+  await expect(card3.locator('.recommended-poster__cta')).toHaveText(/Реєстрація/i);
 });
 
 test('recommended manual reorder controls are disabled in admin UI', async ({ page }) => {

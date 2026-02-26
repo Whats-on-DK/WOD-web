@@ -1669,149 +1669,153 @@ body:not(.is-admin) [data-admin-controls] {
   box-shadow: var(--shadow);
 }
 
-.highlights__card--recommended {
-  align-content: start;
+.recommended-strip {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.recommended-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.recommended-strip__track {
+  display: flex;
   gap: 12px;
 }
 
-.highlights__card-link {
+.highlights__card--recommended {
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  width: min(240px, calc((100vw - 96px) / 3));
+  flex: 0 0 min(240px, calc((100vw - 96px) / 3));
+}
+
+.recommended-poster {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #d1d5db;
+}
+
+.recommended-poster__detail-link {
+  display: block;
+  width: 100%;
+  height: 100%;
   color: inherit;
   text-decoration: none;
 }
 
-.highlights__card-link:hover,
-.highlights__card-link:focus-visible {
-  color: inherit;
+.recommended-poster__detail-link:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: -4px;
 }
 
-.highlights__card--recommended h3 a {
-  color: inherit;
-  text-decoration: none;
+.recommended-poster__img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
 }
 
-.highlights__recommended-meta {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.9rem;
+.recommended-poster__placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #d4d4d8, #e5e7eb);
 }
 
-.highlights__cta {
-  margin-top: 2px;
+.recommended-poster__overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(7, 10, 24, 0.08) 10%, rgba(7, 10, 24, 0.86) 90%);
+  color: #f8fafc;
 }
 
-.highlights__card--recommended .recommended-card__body {
+.recommended-poster__overlay-content {
+  position: absolute;
+  inset: auto 12px 12px 12px;
   display: grid;
   gap: 8px;
-  min-height: 82px;
 }
 
-.highlights__card--recommended .recommended-card__title {
+.recommended-poster__title {
   margin: 0;
-  font-size: 1.02rem;
-  line-height: 1.3;
+  font-size: 1rem;
+  line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.highlights__card--recommended .recommended-card__title-link {
-  color: inherit;
-  text-decoration: none;
-}
-
-.highlights__card--recommended .recommended-card__title-link:hover,
-.highlights__card--recommended .recommended-card__title-link:focus-visible {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.highlights__card--recommended .recommended-card__meta-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.highlights__card--recommended .recommended-card__meta {
+.recommended-poster__meta {
   margin: 0;
-  color: var(--muted);
-  font-size: 0.83rem;
-  line-height: 1.3;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.highlights__card--recommended .recommended-card__cta {
-  width: auto;
-  align-self: center;
-  min-width: unset;
-  padding: 6px 10px;
   font-size: 0.82rem;
+  line-height: 1.3;
+  color: rgba(248, 250, 252, 0.9);
+}
+
+.recommended-poster__cta {
+  width: fit-content;
+  min-width: 0;
+  padding: 6px 10px;
   border-radius: 999px;
-  flex: 0 0 auto;
+  font-size: 0.8rem;
 }
 
-.recommended-marquee {
-  width: 100%;
-}
-
-.recommended-marquee__inner {
-  display: flex;
-  gap: 12px;
-  width: max-content;
-}
-
-.recommended-marquee__track {
-  display: flex;
-  gap: 12px;
-}
-
-.recommended-marquee .highlights__card--recommended {
-  width: 338px;
-  flex: 0 0 338px;
-}
-
-.recommended-marquee--animated {
-  overflow: hidden;
-}
-
-.recommended-marquee--animated .recommended-marquee__inner {
-  animation: recommended-marquee-scroll var(--marquee-duration, 40s) linear infinite;
-  will-change: transform;
-}
-
-.recommended-marquee--animated:hover .recommended-marquee__inner,
-.recommended-marquee--animated:focus-within .recommended-marquee__inner,
-.recommended-marquee--animated.is-paused .recommended-marquee__inner {
-  animation-play-state: paused;
-}
-
-.recommended-marquee--static {
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 8px;
-  scrollbar-width: none;
-}
-
-.recommended-marquee--static::-webkit-scrollbar {
-  display: none;
-}
-
-@keyframes recommended-marquee-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(calc(-1 * var(--marquee-shift, 0px)));
-  }
+.recommended-poster__cta:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
 }
 
 @media (max-width: 767px) {
-  .recommended-marquee .highlights__card--recommended {
-    width: min(320px, calc(100vw - 72px));
-    flex-basis: min(320px, calc(100vw - 72px));
+  .recommended-strip {
+    scroll-snap-type: x mandatory;
+  }
+
+  .recommended-strip__track {
+    gap: 10px;
+  }
+
+  .highlights__card--recommended {
+    width: 100%;
+    flex-basis: 100%;
+    scroll-snap-align: start;
+  }
+
+  .recommended-poster__overlay {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .recommended-strip {
+    overflow-x: auto;
+  }
+
+  .recommended-poster__overlay {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 160ms ease;
+  }
+
+  .highlights__card--recommended:hover .recommended-poster__overlay,
+  .highlights__card--recommended:focus-within .recommended-poster__overlay,
+  .recommended-poster__detail-link:focus + .recommended-poster__overlay,
+  .recommended-poster__detail-link:focus-visible + .recommended-poster__overlay {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
   }
 }
 
@@ -3576,10 +3580,6 @@ body[data-admin-auth="denied"] [data-admin-protected] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .recommended-marquee--animated .recommended-marquee__inner {
-    animation: none !important;
-  }
-
   * {
     animation: none !important;
     transition: none !important;

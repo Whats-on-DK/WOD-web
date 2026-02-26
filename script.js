@@ -1499,6 +1499,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       getLocalizedCity: (value) => getLocalizedCity(value)
     };
     const recommendedDesktopQuery = window.matchMedia('(min-width: 768px)');
+    const recommendedMobileQuery = window.matchMedia('(max-width: 767px)');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     let recommendedMarqueeTeardown = () => {};
 
@@ -1622,34 +1623,22 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
             event.imageUrl ||
             event.image_url ||
             '';
-          const imageMarkup = image
-            ? `
-              <div class="event-image-frame event-image-frame--recommended">
-                <div class="event-image-frame__bg" style="background-image:url('${image}')"></div>
-                <div class="event-image-frame__bg-overlay" aria-hidden="true"></div>
-                <img class="event-image-frame__img" src="${image}" alt="${title}" loading="lazy" width="360" height="220" />
-              </div>
-            `
-            : `
-              <div class="event-image-frame event-image-frame--recommended event-image-frame--placeholder">
-                <div class="event-image-frame__placeholder" aria-hidden="true"></div>
-              </div>
-            `;
+          const posterMarkup = image
+            ? `<img class="recommended-poster__img" src="${image}" alt="${title}" loading="lazy" width="360" height="540" />`
+            : '<div class="recommended-poster__placeholder" aria-hidden="true"></div>';
 
           return `
             <article class="highlights__card highlights__card--recommended" data-recommended-id="${event.id}">
-              <a class="highlights__card-link" href="${detailUrl}">
-                <div class="highlights__media">
-                  ${imageMarkup}
-                </div>
-              </a>
-              <div class="recommended-card__body">
-                <h3 class="recommended-card__title">
-                  <a class="recommended-card__title-link" href="${detailUrl}">${title}</a>
-                </h3>
-                <div class="recommended-card__meta-row">
-                  <p class="recommended-card__meta">${dateLabel}${city ? ` · ${city}` : ''}</p>
-                  <a class="event-card__cta recommended-card__cta" href="${cta.href}" rel="noopener">${cta.label}</a>
+              <div class="recommended-poster">
+                <a class="recommended-poster__detail-link" href="${detailUrl}" aria-label="${title}">
+                  ${posterMarkup}
+                </a>
+                <div class="recommended-poster__overlay">
+                  <div class="recommended-poster__overlay-content">
+                    <h3 class="recommended-poster__title">${title}</h3>
+                    <p class="recommended-poster__meta">${dateLabel}${city ? ` · ${city}` : ''}</p>
+                    <a class="event-card__cta recommended-poster__cta" href="${cta.href}" rel="noopener">${cta.label}</a>
+                  </div>
                 </div>
               </div>
             </article>
@@ -1657,81 +1646,118 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         })
         .join('');
 
-      const shouldAnimate =
-        list.length > 3 && recommendedDesktopQuery.matches && !reducedMotionQuery.matches;
-      if (shouldAnimate) {
-        highlightsTrack.innerHTML = `
-          <div class="recommended-marquee recommended-marquee--animated" data-recommended-marquee>
-            <div class="recommended-marquee__inner">
-              <div class="recommended-marquee__track">${cardMarkup}</div>
-              <div class="recommended-marquee__track recommended-marquee__track--clone" aria-hidden="true">${cardMarkup}</div>
-            </div>
-          </div>
-        `;
-      } else {
-        highlightsTrack.innerHTML = `
-          <div class="recommended-marquee recommended-marquee--static" data-recommended-marquee>
-            <div class="recommended-marquee__track">${cardMarkup}</div>
-          </div>
-        `;
-      }
+      highlightsTrack.innerHTML = `
+        <div class="recommended-strip" data-recommended-strip>
+          <div class="recommended-strip__track">${cardMarkup}</div>
+        </div>
+      `;
 
-      const marqueeRoot = highlightsTrack.querySelector('[data-recommended-marquee]');
-      const marqueeInner = marqueeRoot?.querySelector('.recommended-marquee__inner');
-      const primaryTrack = marqueeRoot?.querySelector('.recommended-marquee__track');
+      const stripRoot = highlightsTrack.querySelector('[data-recommended-strip]');
+      const stripTrack = stripRoot?.querySelector('.recommended-strip__track');
 
-      if (shouldAnimate && marqueeRoot instanceof HTMLElement && marqueeInner instanceof HTMLElement && primaryTrack instanceof HTMLElement) {
-        const speedPxPerSec = 56;
+      if (stripRoot instanceof HTMLElement && stripTrack instanceof HTMLElement) {
         let resumeTimer = null;
-        let scrollTimer = null;
+        let autoplayTimer = null;
+        let currentIndex = 0;
+        const getCards = () =>
+          Array.from(stripTrack.querySelectorAll('.highlights__card--recommended')).filter(
+            (card) => card instanceof HTMLElement
+          );
+        const getSnapPoints = () =>
+          getCards().map((card) => card.offsetLeft).filter((value) => Number.isFinite(value));
+        const clearAutoplay = () => {
+          if (autoplayTimer) {
+            window.clearInterval(autoplayTimer);
+            autoplayTimer = null;
+          }
+        };
+        const getNearestIndex = (points) => {
+          const left = stripRoot.scrollLeft;
+          let nearest = 0;
+          let minDiff = Number.POSITIVE_INFINITY;
+          points.forEach((point, index) => {
+            const diff = Math.abs(point - left);
+            if (diff < minDiff) {
+              minDiff = diff;
+              nearest = index;
+            }
+          });
+          return nearest;
+        };
+        const startAutoplay = () => {
+          const points = getSnapPoints();
+          const canAutoplay =
+            recommendedMobileQuery.matches && !reducedMotionQuery.matches && points.length > 1;
+          clearAutoplay();
+          if (!canAutoplay) return;
+          autoplayTimer = window.setInterval(() => {
+            const nextPoints = getSnapPoints();
+            if (nextPoints.length <= 1) return;
+            currentIndex = getNearestIndex(nextPoints);
+            const nextIndex = (currentIndex + 1) % nextPoints.length;
+            stripRoot.scrollTo({ left: nextPoints[nextIndex], behavior: 'smooth' });
+            currentIndex = nextIndex;
+          }, 5000);
+        };
         const setPaused = (paused) => {
-          marqueeRoot.classList.toggle('is-paused', paused);
+          stripRoot.classList.toggle('is-paused', paused);
+          if (paused) {
+            clearAutoplay();
+          } else {
+            startAutoplay();
+          }
         };
         const resumeAfterIdle = () => {
           if (resumeTimer) window.clearTimeout(resumeTimer);
           resumeTimer = window.setTimeout(() => setPaused(false), 1400);
         };
-        const updateMarqueeMetrics = () => {
-          const halfWidth = Math.max(1, primaryTrack.scrollWidth);
-          const durationSec = Math.max(18, halfWidth / speedPxPerSec);
-          marqueeRoot.style.setProperty('--marquee-shift', `${halfWidth}px`);
-          marqueeRoot.style.setProperty('--marquee-duration', `${durationSec}s`);
-        };
         const handleViewportChange = () => {
-          const canAnimate =
-            list.length > 3 && recommendedDesktopQuery.matches && !reducedMotionQuery.matches;
-          if (!canAnimate) {
-            renderRecommended(list);
-            return;
+          if (!recommendedDesktopQuery.matches) {
+            const points = getSnapPoints();
+            if (points.length > 0) {
+              currentIndex = Math.min(getNearestIndex(points), points.length - 1);
+            }
           }
-          updateMarqueeMetrics();
+          startAutoplay();
         };
         const onPointerDown = () => setPaused(true);
         const onPointerUp = () => resumeAfterIdle();
+        const onWheel = () => setPaused(true);
         const onScroll = () => {
           setPaused(true);
-          if (scrollTimer) window.clearTimeout(scrollTimer);
-          scrollTimer = window.setTimeout(() => setPaused(false), 1400);
+          resumeAfterIdle();
         };
 
-        updateMarqueeMetrics();
-        marqueeRoot.addEventListener('pointerdown', onPointerDown);
-        marqueeRoot.addEventListener('pointerup', onPointerUp);
-        marqueeRoot.addEventListener('pointercancel', onPointerUp);
-        marqueeRoot.addEventListener('scroll', onScroll, { passive: true });
+        startAutoplay();
+        stripRoot.addEventListener('pointerdown', onPointerDown);
+        stripRoot.addEventListener('pointerup', onPointerUp);
+        stripRoot.addEventListener('pointercancel', onPointerUp);
+        stripRoot.addEventListener('touchstart', onPointerDown, { passive: true });
+        stripRoot.addEventListener('touchend', onPointerUp, { passive: true });
+        stripRoot.addEventListener('wheel', onWheel, { passive: true });
+        stripRoot.addEventListener('scroll', onScroll, { passive: true });
         window.addEventListener('resize', handleViewportChange);
+        if (typeof recommendedMobileQuery.addEventListener === 'function') {
+          recommendedMobileQuery.addEventListener('change', handleViewportChange);
+        }
         if (typeof reducedMotionQuery.addEventListener === 'function') {
           reducedMotionQuery.addEventListener('change', handleViewportChange);
         }
 
         recommendedMarqueeTeardown = () => {
           if (resumeTimer) window.clearTimeout(resumeTimer);
-          if (scrollTimer) window.clearTimeout(scrollTimer);
-          marqueeRoot.removeEventListener('pointerdown', onPointerDown);
-          marqueeRoot.removeEventListener('pointerup', onPointerUp);
-          marqueeRoot.removeEventListener('pointercancel', onPointerUp);
-          marqueeRoot.removeEventListener('scroll', onScroll);
+          clearAutoplay();
+          stripRoot.removeEventListener('pointerdown', onPointerDown);
+          stripRoot.removeEventListener('pointerup', onPointerUp);
+          stripRoot.removeEventListener('pointercancel', onPointerUp);
+          stripRoot.removeEventListener('touchstart', onPointerDown);
+          stripRoot.removeEventListener('touchend', onPointerUp);
+          stripRoot.removeEventListener('wheel', onWheel);
+          stripRoot.removeEventListener('scroll', onScroll);
           window.removeEventListener('resize', handleViewportChange);
+          if (typeof recommendedMobileQuery.removeEventListener === 'function') {
+            recommendedMobileQuery.removeEventListener('change', handleViewportChange);
+          }
           if (typeof reducedMotionQuery.removeEventListener === 'function') {
             reducedMotionQuery.removeEventListener('change', handleViewportChange);
           }
