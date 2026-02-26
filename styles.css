@@ -1876,6 +1876,31 @@ body:not(.is-admin) [data-admin-controls] {
   gap: 12px;
 }
 
+.recommended-strip--marquee {
+  overflow: hidden;
+}
+
+.recommended-strip__track--marquee {
+  width: max-content;
+  will-change: transform;
+  animation: recommended-marquee var(--recommended-marquee-duration, 24s) linear infinite;
+}
+
+.recommended-strip--marquee:hover .recommended-strip__track--marquee,
+.recommended-strip--marquee:focus-within .recommended-strip__track--marquee,
+.recommended-strip--marquee.is-paused .recommended-strip__track--marquee {
+  animation-play-state: paused;
+}
+
+@keyframes recommended-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-1 * var(--recommended-marquee-distance, 50%)));
+  }
+}
+
 .highlights__card--recommended {
   background: transparent;
   border: none;
@@ -1969,6 +1994,7 @@ body:not(.is-admin) [data-admin-controls] {
 
   .recommended-strip {
     scroll-snap-type: x mandatory;
+    overflow-x: auto;
   }
 
   .recommended-strip__track {

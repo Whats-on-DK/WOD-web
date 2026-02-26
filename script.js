@@ -1687,9 +1687,12 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       const stripTrack = stripRoot?.querySelector('.recommended-strip__track');
 
       if (stripRoot instanceof HTMLElement && stripTrack instanceof HTMLElement) {
+        const baseMarkup = cardMarkup;
         let resumeTimer = null;
         let autoplayTimer = null;
         let currentIndex = 0;
+        let marqueeActive = false;
+        let marqueeResizeRaf = null;
         const getCards = () =>
           Array.from(stripTrack.querySelectorAll('.highlights__card--recommended')).filter(
             (card) => card instanceof HTMLElement
@@ -1701,6 +1704,40 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
             window.clearInterval(autoplayTimer);
             autoplayTimer = null;
           }
+        };
+        const clearMarqueeMode = () => {
+          marqueeActive = false;
+          stripRoot.classList.remove('recommended-strip--marquee', 'is-paused');
+          stripTrack.classList.remove('recommended-strip__track--marquee');
+          stripTrack.style.removeProperty('--recommended-marquee-distance');
+          stripTrack.style.removeProperty('--recommended-marquee-duration');
+          stripTrack.innerHTML = baseMarkup;
+          syncSavedStars(stripRoot);
+        };
+        const enableMarqueeMode = () => {
+          clearAutoplay();
+          const desktopReady = recommendedDesktopQuery.matches;
+          const motionAllowed = !reducedMotionQuery.matches;
+          const canMarquee = desktopReady && motionAllowed && list.length > 3;
+          if (!canMarquee) {
+            clearMarqueeMode();
+            return false;
+          }
+          marqueeActive = true;
+          stripRoot.classList.add('recommended-strip--marquee');
+          stripTrack.classList.add('recommended-strip__track--marquee');
+          stripTrack.innerHTML = `${baseMarkup}${baseMarkup}`;
+          syncSavedStars(stripRoot);
+          const halfWidth = stripTrack.scrollWidth / 2;
+          if (!Number.isFinite(halfWidth) || halfWidth <= 0) {
+            clearMarqueeMode();
+            return false;
+          }
+          const speedPxPerSec = 42;
+          const durationSec = Math.max(halfWidth / speedPxPerSec, 12);
+          stripTrack.style.setProperty('--recommended-marquee-distance', `${halfWidth}px`);
+          stripTrack.style.setProperty('--recommended-marquee-duration', `${durationSec}s`);
+          return true;
         };
         const getNearestIndex = (points) => {
           const left = stripRoot.scrollLeft;
@@ -1716,6 +1753,10 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           return nearest;
         };
         const startAutoplay = () => {
+          if (marqueeActive) {
+            clearAutoplay();
+            return;
+          }
           const points = getSnapPoints();
           const hasOverflow = stripRoot.scrollWidth - stripRoot.clientWidth > 4;
           const canAutoplay =
@@ -1733,6 +1774,9 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         };
         const setPaused = (paused) => {
           stripRoot.classList.toggle('is-paused', paused);
+          if (marqueeActive) {
+            return;
+          }
           if (paused) {
             clearAutoplay();
           } else {
@@ -1744,11 +1788,19 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           resumeTimer = window.setTimeout(() => setPaused(false), 1400);
         };
         const handleViewportChange = () => {
-          const points = getSnapPoints();
-          if (points.length > 0) {
-            currentIndex = Math.min(getNearestIndex(points), points.length - 1);
+          if (marqueeResizeRaf) {
+            window.cancelAnimationFrame(marqueeResizeRaf);
           }
-          startAutoplay();
+          marqueeResizeRaf = window.requestAnimationFrame(() => {
+            marqueeResizeRaf = null;
+            const marqueeEnabled = enableMarqueeMode();
+            if (marqueeEnabled) return;
+            const points = getSnapPoints();
+            if (points.length > 0) {
+              currentIndex = Math.min(getNearestIndex(points), points.length - 1);
+            }
+            startAutoplay();
+          });
         };
         const onPointerDown = () => setPaused(true);
         const onPointerUp = () => resumeAfterIdle();
@@ -1766,7 +1818,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           resumeAfterIdle();
         };
 
-        startAutoplay();
+        handleViewportChange();
         stripRoot.addEventListener('pointerdown', onPointerDown);
         stripRoot.addEventListener('pointerup', onPointerUp);
         stripRoot.addEventListener('pointercancel', onPointerUp);
@@ -1788,7 +1840,9 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
 
         recommendedMarqueeTeardown = () => {
           if (resumeTimer) window.clearTimeout(resumeTimer);
+          if (marqueeResizeRaf) window.cancelAnimationFrame(marqueeResizeRaf);
           clearAutoplay();
+          clearMarqueeMode();
           stripRoot.removeEventListener('pointerdown', onPointerDown);
           stripRoot.removeEventListener('pointerup', onPointerUp);
           stripRoot.removeEventListener('pointercancel', onPointerUp);
@@ -2049,6 +2103,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         const saved = toggleSaved(eventId);
         syncSavedStarButton(heroSaveButton);
         showSavedToast(saved);
+        heroSaveButton.blur();
       });
     }
 
@@ -2161,6 +2216,9 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
             applyFilters({ preservePage: true });
           } else {
             syncSavedStarButton(savedToggle);
+          }
+          if (typeof savedToggle.blur === 'function') {
+            savedToggle.blur();
           }
           return;
         }
@@ -4503,6 +4561,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       const saved = toggleSaved(eventId);
       syncSavedStarButton(savedToggle);
       showSavedToast(saved);
+      savedToggle.blur();
     });
 
     const prevButton = document.querySelector('.highlights__button[data-action="prev"]');
