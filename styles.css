@@ -1595,6 +1595,12 @@ body:not(.is-admin) [data-admin-controls] {
   box-shadow: var(--focus-ring);
 }
 
+.highlights__track--recommended {
+  display: block;
+  overflow: hidden;
+  padding-inline: 0;
+}
+
 .highlights__card {
   background: var(--surface);
   border-radius: 16px;
@@ -1745,6 +1751,68 @@ body:not(.is-admin) [data-admin-controls] {
   font-size: 0.82rem;
   border-radius: 999px;
   flex: 0 0 auto;
+}
+
+.recommended-marquee {
+  width: 100%;
+}
+
+.recommended-marquee__inner {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+}
+
+.recommended-marquee__track {
+  display: flex;
+  gap: 12px;
+}
+
+.recommended-marquee .highlights__card--recommended {
+  width: 338px;
+  flex: 0 0 338px;
+}
+
+.recommended-marquee--animated {
+  overflow: hidden;
+}
+
+.recommended-marquee--animated .recommended-marquee__inner {
+  animation: recommended-marquee-scroll var(--marquee-duration, 40s) linear infinite;
+  will-change: transform;
+}
+
+.recommended-marquee--animated:hover .recommended-marquee__inner,
+.recommended-marquee--animated:focus-within .recommended-marquee__inner,
+.recommended-marquee--animated.is-paused .recommended-marquee__inner {
+  animation-play-state: paused;
+}
+
+.recommended-marquee--static {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+
+.recommended-marquee--static::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes recommended-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-1 * var(--marquee-shift, 0px)));
+  }
+}
+
+@media (max-width: 767px) {
+  .recommended-marquee .highlights__card--recommended {
+    width: min(320px, calc(100vw - 72px));
+    flex-basis: min(320px, calc(100vw - 72px));
+  }
 }
 
 .highlights__card h3 {
@@ -3508,6 +3576,10 @@ body[data-admin-auth="denied"] [data-admin-protected] {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .recommended-marquee--animated .recommended-marquee__inner {
+    animation: none !important;
+  }
+
   * {
     animation: none !important;
     transition: none !important;

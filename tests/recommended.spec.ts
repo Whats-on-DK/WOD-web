@@ -230,6 +230,8 @@ test('admin sets event as recommended and it appears on homepage', async ({ page
   await expect(page.locator('[data-recommended-status]')).toContainText(/saved/i);
 
   await page.goto('/?serverless=1');
+  await expect(page.locator('.highlights__button[data-action="prev"]')).toBeHidden();
+  await expect(page.locator('.highlights__button[data-action="next"]')).toBeHidden();
   const recommendedCard = page.locator('.highlights__card', { hasText: 'Recommended Event 1' }).first();
   await expect(recommendedCard).toBeVisible();
   await expect(recommendedCard.locator('.highlights__card-link')).toHaveAttribute(
@@ -269,6 +271,49 @@ test('admin sets event as recommended and it appears on homepage', async ({ page
     return { cardWidth: cardRect.width, ctaWidth: ctaRect.width };
   });
   expect(ctaWidths.ctaWidth).toBeLessThan(ctaWidths.cardWidth * 0.75);
+});
+
+test('recommended marquee auto-loops with clone and pauses on hover', async ({ page }) => {
+  await configureRecommendedApi(page, { initialOrder: ['evt-rec-1', 'evt-rec-2', 'evt-rec-3', 'evt-rec-4'] });
+
+  await page.goto('/?serverless=1');
+  const marquee = page.locator('.recommended-marquee--animated').first();
+  await expect(marquee).toBeVisible();
+  await expect(page.locator('.recommended-marquee__track--clone')).toHaveCount(1);
+
+  const runningState = await marquee.evaluate((element) => {
+    const inner = (element as HTMLElement).querySelector('.recommended-marquee__inner') as HTMLElement;
+    const styles = window.getComputedStyle(inner);
+    return { animationName: styles.animationName, playState: styles.animationPlayState };
+  });
+  expect(runningState.animationName).not.toBe('none');
+  expect(runningState.playState).toBe('running');
+
+  await marquee.hover();
+  const pausedState = await marquee.evaluate((element) => {
+    const inner = (element as HTMLElement).querySelector('.recommended-marquee__inner') as HTMLElement;
+    return window.getComputedStyle(inner).animationPlayState;
+  });
+  expect(pausedState).toBe('paused');
+});
+
+test('recommended with three or fewer items stays static and does not clone', async ({ page }) => {
+  await configureRecommendedApi(page, { initialOrder: ['evt-rec-1', 'evt-rec-2', 'evt-rec-3'] });
+
+  await page.goto('/?serverless=1');
+  await expect(page.locator('.recommended-marquee--static')).toBeVisible();
+  await expect(page.locator('.recommended-marquee--animated')).toHaveCount(0);
+  await expect(page.locator('.recommended-marquee__track--clone')).toHaveCount(0);
+});
+
+test('recommended marquee is disabled when prefers-reduced-motion is enabled', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await configureRecommendedApi(page, { initialOrder: ['evt-rec-1', 'evt-rec-2', 'evt-rec-3', 'evt-rec-4'] });
+
+  await page.goto('/?serverless=1');
+  await expect(page.locator('.recommended-marquee--static')).toBeVisible();
+  await expect(page.locator('.recommended-marquee--animated')).toHaveCount(0);
+  await expect(page.locator('.recommended-marquee__track--clone')).toHaveCount(0);
 });
 
 test('recommended CTA labels follow paid/registration/details logic', async ({ page }) => {

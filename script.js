@@ -1498,6 +1498,9 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       getLocalizedEventTitle,
       getLocalizedCity: (value) => getLocalizedCity(value)
     };
+    const recommendedDesktopQuery = window.matchMedia('(min-width: 768px)');
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let recommendedMarqueeTeardown = () => {};
 
     const recommendedMockEvents = [
       {
@@ -1577,6 +1580,9 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
 
     const renderRecommended = (recommendedList) => {
       if (!highlightsTrack) return;
+      recommendedMarqueeTeardown();
+      recommendedMarqueeTeardown = () => {};
+      highlightsTrack.classList.add('highlights__track--recommended');
       const list = Array.isArray(recommendedList)
         ? [...recommendedList]
             .sort((a, b) => Number(a.position || 0) - Number(b.position || 0))
@@ -1595,7 +1601,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       }
 
       highlightsTrack.classList.remove('highlights__track--empty');
-      highlightsTrack.innerHTML = list
+      const cardMarkup = list
         .map((event) => {
           const title = getLocalizedEventTitle(event);
           const formatValue = String(event.format || '').toLowerCase();
@@ -1650,11 +1656,95 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           `;
         })
         .join('');
+
+      const shouldAnimate =
+        list.length > 3 && recommendedDesktopQuery.matches && !reducedMotionQuery.matches;
+      if (shouldAnimate) {
+        highlightsTrack.innerHTML = `
+          <div class="recommended-marquee recommended-marquee--animated" data-recommended-marquee>
+            <div class="recommended-marquee__inner">
+              <div class="recommended-marquee__track">${cardMarkup}</div>
+              <div class="recommended-marquee__track recommended-marquee__track--clone" aria-hidden="true">${cardMarkup}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        highlightsTrack.innerHTML = `
+          <div class="recommended-marquee recommended-marquee--static" data-recommended-marquee>
+            <div class="recommended-marquee__track">${cardMarkup}</div>
+          </div>
+        `;
+      }
+
+      const marqueeRoot = highlightsTrack.querySelector('[data-recommended-marquee]');
+      const marqueeInner = marqueeRoot?.querySelector('.recommended-marquee__inner');
+      const primaryTrack = marqueeRoot?.querySelector('.recommended-marquee__track');
+
+      if (shouldAnimate && marqueeRoot instanceof HTMLElement && marqueeInner instanceof HTMLElement && primaryTrack instanceof HTMLElement) {
+        const speedPxPerSec = 56;
+        let resumeTimer = null;
+        let scrollTimer = null;
+        const setPaused = (paused) => {
+          marqueeRoot.classList.toggle('is-paused', paused);
+        };
+        const resumeAfterIdle = () => {
+          if (resumeTimer) window.clearTimeout(resumeTimer);
+          resumeTimer = window.setTimeout(() => setPaused(false), 1400);
+        };
+        const updateMarqueeMetrics = () => {
+          const halfWidth = Math.max(1, primaryTrack.scrollWidth);
+          const durationSec = Math.max(18, halfWidth / speedPxPerSec);
+          marqueeRoot.style.setProperty('--marquee-shift', `${halfWidth}px`);
+          marqueeRoot.style.setProperty('--marquee-duration', `${durationSec}s`);
+        };
+        const handleViewportChange = () => {
+          const canAnimate =
+            list.length > 3 && recommendedDesktopQuery.matches && !reducedMotionQuery.matches;
+          if (!canAnimate) {
+            renderRecommended(list);
+            return;
+          }
+          updateMarqueeMetrics();
+        };
+        const onPointerDown = () => setPaused(true);
+        const onPointerUp = () => resumeAfterIdle();
+        const onScroll = () => {
+          setPaused(true);
+          if (scrollTimer) window.clearTimeout(scrollTimer);
+          scrollTimer = window.setTimeout(() => setPaused(false), 1400);
+        };
+
+        updateMarqueeMetrics();
+        marqueeRoot.addEventListener('pointerdown', onPointerDown);
+        marqueeRoot.addEventListener('pointerup', onPointerUp);
+        marqueeRoot.addEventListener('pointercancel', onPointerUp);
+        marqueeRoot.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', handleViewportChange);
+        if (typeof reducedMotionQuery.addEventListener === 'function') {
+          reducedMotionQuery.addEventListener('change', handleViewportChange);
+        }
+
+        recommendedMarqueeTeardown = () => {
+          if (resumeTimer) window.clearTimeout(resumeTimer);
+          if (scrollTimer) window.clearTimeout(scrollTimer);
+          marqueeRoot.removeEventListener('pointerdown', onPointerDown);
+          marqueeRoot.removeEventListener('pointerup', onPointerUp);
+          marqueeRoot.removeEventListener('pointercancel', onPointerUp);
+          marqueeRoot.removeEventListener('scroll', onScroll);
+          window.removeEventListener('resize', handleViewportChange);
+          if (typeof reducedMotionQuery.removeEventListener === 'function') {
+            reducedMotionQuery.removeEventListener('change', handleViewportChange);
+          }
+        };
+      }
       scheduleHighlightsControls();
     };
 
     const renderHighlights = (list) => {
       if (!highlightsTrack) return;
+      recommendedMarqueeTeardown();
+      recommendedMarqueeTeardown = () => {};
+      highlightsTrack.classList.remove('highlights__track--recommended');
       const now = new Date();
       const upcomingWeek = filterWeeklyEvents(list, now, { isArchivedEvent, isPast });
 
@@ -4332,6 +4422,22 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
   if (highlightsTrack) {
     const prevButton = document.querySelector('.highlights__button[data-action="prev"]');
     const nextButton = document.querySelector('.highlights__button[data-action="next"]');
+    const highlightsControls = document.querySelector('.highlights__controls');
+    if (highlightsMode === 'recommended') {
+      scheduleHighlightsControls = () => {};
+      if (prevButton) {
+        prevButton.hidden = true;
+        prevButton.disabled = true;
+      }
+      if (nextButton) {
+        nextButton.hidden = true;
+        nextButton.disabled = true;
+      }
+      if (highlightsControls instanceof HTMLElement) {
+        highlightsControls.hidden = true;
+      }
+      return;
+    }
     const getStep = () => {
       const firstCard = highlightsTrack.querySelector('.highlights__card');
       if (!(firstCard instanceof HTMLElement)) {
