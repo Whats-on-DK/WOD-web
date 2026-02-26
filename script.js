@@ -1996,6 +1996,9 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           heroImageCache.get(event.id) ||
           '';
         heroMedia.style.backgroundImage = image ? `url("${image}")` : '';
+        heroMedia.style.backgroundSize = image ? 'contain' : '';
+        heroMedia.style.backgroundPosition = image ? 'center top' : '';
+        heroMedia.style.backgroundRepeat = image ? 'no-repeat' : '';
         heroMedia.classList.toggle('hero-card__media--placeholder', !image);
         heroMedia.dataset.eventId = event.id || '';
         if (!image && event.id) {
@@ -2011,6 +2014,9 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
             heroImageCache.set(currentId, detailImage);
             if (heroMedia.dataset.eventId !== currentId) return;
             heroMedia.style.backgroundImage = `url("${detailImage}")`;
+            heroMedia.style.backgroundSize = 'contain';
+            heroMedia.style.backgroundPosition = 'center top';
+            heroMedia.style.backgroundRepeat = 'no-repeat';
             heroMedia.classList.remove('hero-card__media--placeholder');
           });
         }
