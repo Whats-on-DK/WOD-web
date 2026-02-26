@@ -1620,6 +1620,10 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
             ? formatMessage('online', {}) || 'Онлайн'
             : getLocalizedCity(event.city, event);
           const dateLabel = formatDateRange(event.start, event.end);
+          const priceLabel = formatPriceLabel(event.priceType || '', event.priceMin, event.priceMax);
+          const languageLabel = getLanguageLabel(event.language);
+          const firstTag = getTagList(event.tags)[0];
+          const tagLabel = firstTag ? getLocalizedTag(firstTag.label) : '';
           const detailUrl = `event-card.html?id=${encodeURIComponent(event.id)}`;
           const cta = getRecommendedCta(event);
           const image =
@@ -1638,11 +1642,43 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
                 <a class="poster-card__cover-link recommended-poster__detail-link" href="${detailUrl}" aria-label="${title}">
                   ${posterMarkup}
                 </a>
+                <button
+                  class="save-star save-star--recommended-mobile"
+                  type="button"
+                  data-action="toggle-saved"
+                  data-event-id="${event.id}"
+                  data-context="recommended"
+                  data-saved="false"
+                  aria-label="Додати у вибрані"
+                  title="Додати у вибрані"
+                >
+                  <span aria-hidden="true">☆</span>
+                </button>
                 <div class="poster-card__overlay recommended-poster__overlay">
                   <div class="poster-card__content recommended-poster__overlay-content">
-                    <h3 class="poster-card__title recommended-poster__title">${title}</h3>
-                    <p class="poster-card__meta recommended-poster__meta">${dateLabel}${city ? ` · ${city}` : ''}</p>
-                    <a class="event-card__cta poster-card__cta recommended-poster__cta" href="${cta.href}" rel="noopener">${cta.label}</a>
+                    <div class="poster-card__top recommended-poster__top">
+                      <span class="poster-card__when recommended-poster__when">${dateLabel}</span>
+                      <span class="poster-card__price recommended-poster__price">${priceLabel}</span>
+                      <button
+                        class="save-star save-star--recommended"
+                        type="button"
+                        data-action="toggle-saved"
+                        data-event-id="${event.id}"
+                        data-context="recommended"
+                        data-saved="false"
+                        aria-label="Додати у вибрані"
+                        title="Додати у вибрані"
+                      >
+                        <span aria-hidden="true">☆</span>
+                      </button>
+                    </div>
+                    <div class="recommended-poster__bottom">
+                      <h3 class="poster-card__title recommended-poster__title">${title}</h3>
+                      <p class="poster-card__meta recommended-poster__meta">${city || ''}</p>
+                      ${languageLabel ? `<p class="poster-card__meta recommended-poster__meta">${languageLabel}</p>` : ''}
+                      ${tagLabel ? `<div class="event-card__tags"><span class="event-card__tag">${tagLabel}</span></div>` : ''}
+                      <a class="event-card__cta poster-card__cta recommended-poster__cta" href="${cta.href}" rel="noopener">${cta.label}</a>
+                    </div>
                   </div>
                 </div>
                 </div>
@@ -1657,6 +1693,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           <div class="recommended-strip__track">${cardMarkup}</div>
         </div>
       `;
+      syncSavedStars(highlightsTrack);
 
       const stripRoot = highlightsTrack.querySelector('[data-recommended-strip]');
       const stripTrack = stripRoot?.querySelector('.recommended-strip__track');
@@ -1692,8 +1729,9 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         };
         const startAutoplay = () => {
           const points = getSnapPoints();
+          const hasOverflow = stripRoot.scrollWidth - stripRoot.clientWidth > 4;
           const canAutoplay =
-            recommendedMobileQuery.matches && !reducedMotionQuery.matches && points.length > 1;
+            !reducedMotionQuery.matches && hasOverflow && points.length > 1 && list.length > 3;
           clearAutoplay();
           if (!canAutoplay) return;
           autoplayTimer = window.setInterval(() => {
@@ -1718,17 +1756,23 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           resumeTimer = window.setTimeout(() => setPaused(false), 1400);
         };
         const handleViewportChange = () => {
-          if (!recommendedDesktopQuery.matches) {
-            const points = getSnapPoints();
-            if (points.length > 0) {
-              currentIndex = Math.min(getNearestIndex(points), points.length - 1);
-            }
+          const points = getSnapPoints();
+          if (points.length > 0) {
+            currentIndex = Math.min(getNearestIndex(points), points.length - 1);
           }
           startAutoplay();
         };
         const onPointerDown = () => setPaused(true);
         const onPointerUp = () => resumeAfterIdle();
         const onWheel = () => setPaused(true);
+        const onMouseEnter = () => setPaused(true);
+        const onMouseLeave = () => setPaused(false);
+        const onFocusIn = () => setPaused(true);
+        const onFocusOut = () => {
+          if (!stripRoot.contains(document.activeElement)) {
+            setPaused(false);
+          }
+        };
         const onScroll = () => {
           setPaused(true);
           resumeAfterIdle();
@@ -1741,6 +1785,10 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         stripRoot.addEventListener('touchstart', onPointerDown, { passive: true });
         stripRoot.addEventListener('touchend', onPointerUp, { passive: true });
         stripRoot.addEventListener('wheel', onWheel, { passive: true });
+        stripRoot.addEventListener('mouseenter', onMouseEnter);
+        stripRoot.addEventListener('mouseleave', onMouseLeave);
+        stripRoot.addEventListener('focusin', onFocusIn);
+        stripRoot.addEventListener('focusout', onFocusOut);
         stripRoot.addEventListener('scroll', onScroll, { passive: true });
         window.addEventListener('resize', handleViewportChange);
         if (typeof recommendedMobileQuery.addEventListener === 'function') {
@@ -1759,6 +1807,10 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           stripRoot.removeEventListener('touchstart', onPointerDown);
           stripRoot.removeEventListener('touchend', onPointerUp);
           stripRoot.removeEventListener('wheel', onWheel);
+          stripRoot.removeEventListener('mouseenter', onMouseEnter);
+          stripRoot.removeEventListener('mouseleave', onMouseLeave);
+          stripRoot.removeEventListener('focusin', onFocusIn);
+          stripRoot.removeEventListener('focusout', onFocusOut);
           stripRoot.removeEventListener('scroll', onScroll);
           window.removeEventListener('resize', handleViewportChange);
           if (typeof recommendedMobileQuery.removeEventListener === 'function') {
@@ -4453,6 +4505,18 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
   });
 
   if (highlightsTrack) {
+    highlightsTrack.addEventListener('click', (event) => {
+      const savedToggle = event.target.closest('[data-action="toggle-saved"]');
+      if (!(savedToggle instanceof HTMLButtonElement)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const eventId = savedToggle.dataset.eventId || '';
+      if (!eventId) return;
+      const saved = toggleSaved(eventId);
+      syncSavedStarButton(savedToggle);
+      showSavedToast(saved);
+    });
+
     const prevButton = document.querySelector('.highlights__button[data-action="prev"]');
     const nextButton = document.querySelector('.highlights__button[data-action="next"]');
     const highlightsControls = document.querySelector('.highlights__controls');

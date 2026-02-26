@@ -661,7 +661,9 @@ button:disabled,
 }
 
 .hero-card__when,
-.hero-card__price {
+.hero-card__price,
+.poster-card__when,
+.poster-card__price {
   color: rgba(248, 250, 252, 0.96);
   font-size: 0.76rem;
   line-height: 1.25;
@@ -1365,7 +1367,7 @@ body:not(.is-admin) [data-admin-controls] {
   z-index: 2;
   display: flex;
   align-items: stretch;
-  background: rgba(7, 10, 24, 0.72);
+  background: rgba(7, 10, 24, 0.8);
   color: #f8fafc;
   opacity: 0;
   visibility: hidden;
@@ -1903,6 +1905,79 @@ body:not(.is-admin) [data-admin-controls] {
   gap: 8px;
 }
 
+.recommended-poster__top {
+  margin-bottom: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "when star"
+    "price star";
+  align-items: start;
+}
+
+.recommended-poster__bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.recommended-poster__bottom .event-card__tags {
+  justify-content: center;
+}
+
+.recommended-poster__bottom .poster-card__cta {
+  align-self: center;
+}
+
+.recommended-poster__when {
+  grid-area: when;
+  white-space: nowrap;
+}
+
+.recommended-poster__price {
+  grid-area: price;
+  justify-self: start;
+}
+
+.save-star--recommended {
+  grid-area: star;
+  align-self: start;
+  width: 30px;
+  height: 30px;
+  color: #f8fafc;
+  border-color: rgba(248, 250, 252, 0.38);
+  background: rgba(248, 250, 252, 0.08);
+}
+
+.save-star--recommended:hover,
+.save-star--recommended:focus-visible {
+  color: #ffffff;
+  border-color: rgba(248, 250, 252, 0.62);
+  background: rgba(248, 250, 252, 0.2);
+}
+
+.save-star--recommended-mobile {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 30px;
+  height: 30px;
+  color: #f8fafc;
+  border-color: rgba(248, 250, 252, 0.42);
+  background: rgba(7, 10, 24, 0.48);
+  display: none;
+}
+
+.save-star--recommended-mobile:hover,
+.save-star--recommended-mobile:focus-visible {
+  color: #ffffff;
+  border-color: rgba(248, 250, 252, 0.68);
+  background: rgba(7, 10, 24, 0.68);
+}
+
 .recommended-poster__title {
   font-size: 1rem;
 }
@@ -1939,6 +2014,10 @@ body:not(.is-admin) [data-admin-controls] {
     scroll-snap-align: start;
   }
 
+  .save-star--recommended-mobile {
+    display: inline-flex;
+  }
+
 }
 
 @media (min-width: 1280px) {
@@ -1958,7 +2037,7 @@ body:not(.is-admin) [data-admin-controls] {
   .poster-card__cover-link:focus-visible + .poster-card__overlay {
     opacity: 1;
     visibility: visible;
-    pointer-events: auto;
+    pointer-events: none;
   }
 }
 
