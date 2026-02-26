@@ -3919,7 +3919,8 @@ body[data-admin-auth="denied"] [data-admin-protected] {
 }
 
 .partners__viewport--marquee {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .partners__track--marquee {

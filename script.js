@@ -3306,7 +3306,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           clearMarqueeMode();
           return false;
         }
-        const speedPxPerSec = 44;
+        const speedPxPerSec = 42;
         const durationSec = Math.max(halfWidth / speedPxPerSec, 12);
         partnersTrack.style.setProperty('--partners-marquee-distance', `${halfWidth}px`);
         partnersTrack.style.setProperty('--partners-marquee-duration', `${durationSec}s`);
