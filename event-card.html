@@ -115,6 +115,68 @@
               </button>
             </section>
 
+          </article>
+
+          <aside class="event-sidebar" aria-label="Панель квитків" data-i18n-aria="ticket_panel_aria">
+            <div class="event-sidebar__card">
+              <p class="event-sidebar__price" data-price-type="paid" data-price-min="350" data-price-max="520">
+                DKK 350–520
+              </p>
+              <p class="event-sidebar__note" data-i18n="event_ticket_note">Купити квитки (DKK 350–520)</p>
+              <a class="event-sidebar__cta event-sidebar__cta--ticket" href="#" target="_blank" rel="noopener" data-event-id="evt-001" data-i18n="ticket_cta" data-testid="ticket-cta">Квитки</a>
+              <div class="event-calendar" data-calendar>
+                <button
+                  class="btn ghost event-calendar__toggle"
+                  type="button"
+                  data-calendar-toggle
+                  aria-expanded="false"
+                  aria-controls="event-calendar-actions"
+                >
+                  Додати в календар
+                </button>
+                <div
+                  class="event-calendar__menu"
+                  id="event-calendar-actions"
+                  data-calendar-menu
+                  hidden
+                >
+                  <a
+                    class="event-calendar__option"
+                    href="#"
+                    target="_blank"
+                    rel="noopener"
+                    data-calendar-google
+                  >Google Calendar</a>
+                  <button class="event-calendar__option" type="button" data-calendar-ics>Download .ics</button>
+                </div>
+              </div>
+              <div class="event-share" data-share>
+                <button
+                  class="btn ghost event-share__toggle"
+                  type="button"
+                  data-share-toggle
+                  aria-expanded="false"
+                  aria-controls="event-share-actions"
+                >
+                  Поділитися
+                </button>
+                <div
+                  class="event-share__menu"
+                  id="event-share-actions"
+                  data-share-menu
+                  hidden
+                >
+                  <button class="event-share__option" type="button" data-share-copy>Copy link</button>
+                  <a class="event-share__option" href="#" target="_blank" rel="noopener" data-share-channel="facebook">Facebook</a>
+                  <a class="event-share__option" href="#" target="_blank" rel="noopener" data-share-channel="messenger">Messenger</a>
+                  <a class="event-share__option" href="#" target="_blank" rel="noopener" data-share-channel="linkedin">LinkedIn</a>
+                  <a class="event-share__option" href="#" target="_blank" rel="noopener" data-share-channel="telegram">Telegram</a>
+                  <a class="event-share__option" href="#" target="_blank" rel="noopener" data-share-channel="whatsapp">WhatsApp</a>
+                  <button class="event-share__option" type="button" data-share-native>Інше</button>
+                </div>
+              </div>
+              <a class="event-sidebar__cta event-sidebar__cta--similar" href="./#events" data-i18n="similar_cta" data-testid="similar-cta" hidden>Схожі події</a>
+            </div>
             <section class="event-article__section">
               <h2 data-i18n="event_where_title">Адреса</h2>
               <p class="event-article__location">
@@ -181,68 +243,6 @@
                 </div>
               </div>
             </section>
-          </article>
-
-          <aside class="event-sidebar" aria-label="Панель квитків" data-i18n-aria="ticket_panel_aria">
-            <div class="event-sidebar__card">
-              <p class="event-sidebar__price" data-price-type="paid" data-price-min="350" data-price-max="520">
-                DKK 350–520
-              </p>
-              <p class="event-sidebar__note" data-i18n="event_ticket_note">Купити квитки (DKK 350–520)</p>
-              <a class="event-sidebar__cta event-sidebar__cta--ticket" href="#" target="_blank" rel="noopener" data-event-id="evt-001" data-i18n="ticket_cta" data-testid="ticket-cta">Квитки</a>
-              <div class="event-calendar" data-calendar>
-                <button
-                  class="btn ghost event-calendar__toggle"
-                  type="button"
-                  data-calendar-toggle
-                  aria-expanded="false"
-                  aria-controls="event-calendar-actions"
-                >
-                  Додати в календар
-                </button>
-                <div
-                  class="event-calendar__menu"
-                  id="event-calendar-actions"
-                  data-calendar-menu
-                  hidden
-                >
-                  <a
-                    class="event-calendar__option"
-                    href="#"
-                    target="_blank"
-                    rel="noopener"
-                    data-calendar-google
-                  >Google Calendar</a>
-                  <button class="event-calendar__option" type="button" data-calendar-ics>Download .ics</button>
-                </div>
-              </div>
-              <div class="event-share" data-share>
-                <button
-                  class="btn ghost event-share__toggle"
-                  type="button"
-                  data-share-toggle
-                  aria-expanded="false"
-                  aria-controls="event-share-actions"
-                >
-                  Поділитися
-                </button>
-                <div
-                  class="event-share__menu"
-                  id="event-share-actions"
-                  data-share-menu
-                  hidden
-                >
-                  <button class="event-share__option" type="button" data-share-copy>Copy link</button>
-                  <a class="event-share__option" href="#" target="_blank" rel="noopener" data-share-channel="facebook">Facebook</a>
-                  <a class="event-share__option" href="#" target="_blank" rel="noopener" data-share-channel="messenger">Messenger</a>
-                  <a class="event-share__option" href="#" target="_blank" rel="noopener" data-share-channel="linkedin">LinkedIn</a>
-                  <a class="event-share__option" href="#" target="_blank" rel="noopener" data-share-channel="telegram">Telegram</a>
-                  <a class="event-share__option" href="#" target="_blank" rel="noopener" data-share-channel="whatsapp">WhatsApp</a>
-                  <button class="event-share__option" type="button" data-share-native>Інше</button>
-                </div>
-              </div>
-              <a class="event-sidebar__cta event-sidebar__cta--similar" href="./#events" data-i18n="similar_cta" data-testid="similar-cta" hidden>Схожі події</a>
-            </div>
             <!-- Share block disabled for now. -->
           </aside>
         </div>
