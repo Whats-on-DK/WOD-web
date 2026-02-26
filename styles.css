@@ -596,7 +596,7 @@ button:disabled,
   display: grid;
   gap: 10px;
   width: 100%;
-  max-width: 240px;
+  max-width: 300px;
   justify-self: end;
 }
 
@@ -609,7 +609,7 @@ button:disabled,
   width: 100%;
   aspect-ratio: 2 / 3;
   min-height: 0;
-  background-size: cover;
+  background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
   background-color: var(--surface);
@@ -1984,7 +1984,7 @@ body:not(.is-admin) [data-admin-controls] {
 
 @media (max-width: 767px) {
   .hero-card {
-    max-width: min(58vw, 220px);
+    max-width: min(72vw, 280px);
     justify-self: end;
   }
 
@@ -2011,7 +2011,7 @@ body:not(.is-admin) [data-admin-controls] {
 
 @media (min-width: 1280px) {
   .hero-card {
-    max-width: 260px;
+    max-width: 340px;
   }
 }
 
@@ -2622,9 +2622,9 @@ body:not(.is-admin) [data-admin-controls] {
 .event-hero {
   width: 100%;
   max-height: 620px;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: auto;
   border-radius: 20px;
   border: 1px solid var(--line);
   margin: 18px 0 8px;
