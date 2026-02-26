@@ -1970,6 +1970,19 @@ body:not(.is-admin) [data-admin-controls] {
   background: rgba(7, 10, 24, 0.68);
 }
 
+.poster-card__media > .save-star.is-saved {
+  color: #172554;
+  border-color: rgba(255, 201, 58, 0.98);
+  background: rgba(255, 201, 58, 0.94);
+}
+
+.poster-card__media > .save-star.is-saved:hover,
+.poster-card__media > .save-star.is-saved:focus-visible {
+  color: #0f172a;
+  border-color: #ffd659;
+  background: #ffd659;
+}
+
 .recommended-poster__title {
   font-size: 1rem;
 }
@@ -2352,9 +2365,14 @@ body:not(.is-admin) [data-admin-controls] {
 }
 
 .save-star.is-saved {
-  color: #f0a600;
-  border-color: rgba(240, 166, 0, 0.55);
-  background: rgba(240, 166, 0, 0.14);
+  color: #ffc93a;
+  border-color: rgba(255, 201, 58, 0.9);
+  background: rgba(240, 166, 0, 0.24);
+}
+
+.save-star.is-saved span {
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(255, 201, 58, 0.4);
 }
 
 .save-star--detail {
