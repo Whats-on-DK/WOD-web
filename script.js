@@ -1931,6 +1931,39 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       });
     };
 
+    const applyHeroMediaImage = (imageUrl, eventId) => {
+      if (!(heroMedia instanceof HTMLElement)) return;
+      const normalizedId = String(eventId || '');
+      const safeUrl = String(imageUrl || '').trim();
+      heroMedia.dataset.eventId = normalizedId;
+      if (!safeUrl) {
+        heroMedia.style.backgroundImage = '';
+        heroMedia.style.backgroundSize = '';
+        heroMedia.style.backgroundPosition = '';
+        heroMedia.style.backgroundRepeat = '';
+        heroMedia.style.aspectRatio = '3 / 4';
+        heroMedia.classList.add('hero-card__media--placeholder');
+        return;
+      }
+      heroMedia.style.backgroundImage = `url("${safeUrl}")`;
+      heroMedia.style.backgroundSize = 'contain';
+      heroMedia.style.backgroundPosition = 'center top';
+      heroMedia.style.backgroundRepeat = 'no-repeat';
+      heroMedia.style.aspectRatio = '3 / 4';
+      heroMedia.classList.remove('hero-card__media--placeholder');
+      const probe = new Image();
+      probe.decoding = 'async';
+      probe.onload = () => {
+        if (heroMedia.dataset.eventId !== normalizedId) return;
+        const width = Number(probe.naturalWidth || 0);
+        const height = Number(probe.naturalHeight || 0);
+        if (width > 0 && height > 0) {
+          heroMedia.style.aspectRatio = `${width} / ${height}`;
+        }
+      };
+      probe.src = safeUrl;
+    };
+
     const renderHeroCard = (event, isLive) => {
       if (!heroTitle || !heroMeta || !heroTags) return;
       if (!event) {
@@ -1944,10 +1977,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         }
         heroTags.innerHTML = '';
         heroTags.hidden = true;
-        if (heroMedia) {
-          heroMedia.style.backgroundImage = '';
-          heroMedia.classList.add('hero-card__media--placeholder');
-        }
+        applyHeroMediaImage('', '');
         if (heroStatus) {
           heroStatus.hidden = true;
         }
@@ -1995,12 +2025,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           event.image_url ||
           heroImageCache.get(event.id) ||
           '';
-        heroMedia.style.backgroundImage = image ? `url("${image}")` : '';
-        heroMedia.style.backgroundSize = image ? 'contain' : '';
-        heroMedia.style.backgroundPosition = image ? 'center top' : '';
-        heroMedia.style.backgroundRepeat = image ? 'no-repeat' : '';
-        heroMedia.classList.toggle('hero-card__media--placeholder', !image);
-        heroMedia.dataset.eventId = event.id || '';
+        applyHeroMediaImage(image, event.id);
         if (!image && event.id) {
           const currentId = event.id;
           fetchPublicEventById(currentId).then((payload) => {
@@ -2012,12 +2037,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
               '';
             if (!detailImage) return;
             heroImageCache.set(currentId, detailImage);
-            if (heroMedia.dataset.eventId !== currentId) return;
-            heroMedia.style.backgroundImage = `url("${detailImage}")`;
-            heroMedia.style.backgroundSize = 'contain';
-            heroMedia.style.backgroundPosition = 'center top';
-            heroMedia.style.backgroundRepeat = 'no-repeat';
-            heroMedia.classList.remove('hero-card__media--placeholder');
+            applyHeroMediaImage(detailImage, currentId);
           });
         }
       }
