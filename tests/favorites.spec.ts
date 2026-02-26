@@ -36,7 +36,11 @@ test('saved events persist and favorites filter shows only saved cards', async (
   );
   expect(visibleIds).toEqual([savedEventId]);
 
-  await page.locator(`[data-testid="event-card"][data-event-id="${savedEventId}"] .event-card__link`).click();
+  const detailHref = await page
+    .locator(`[data-testid="event-card"][data-event-id="${savedEventId}"] .poster-card__cover-link`)
+    .getAttribute('href');
+  expect(detailHref).toBeTruthy();
+  await page.goto(String(detailHref));
   const detailStar = page.locator('.event-article__title-row [data-event-save]');
   await expect(detailStar).toBeVisible();
   await expect(detailStar).toHaveAttribute('data-saved', 'true');

@@ -30,7 +30,9 @@ test('go to event detail and show proper CTA for future/past', async ({ page }) 
   await gotoAndWaitForEvents(page, '/');
 
   const first = page.getByTestId('event-card').first();
-  await first.locator('a').first().click();
+  const detailHref = await first.locator('.poster-card__cover-link').first().getAttribute('href');
+  expect(detailHref).toBeTruthy();
+  await page.goto(String(detailHref));
 
   const ticketCTA = page.getByTestId('ticket-cta');
   const pastBanner = page.getByTestId('event-detail-banner-past');

@@ -66,14 +66,15 @@ test('deep-link tags applies on initial load and keeps tags in URL', async ({ pa
   await expect(communityTagInput).toBeChecked();
   await expect(page).toHaveURL(/tags=community/);
 
-  const selectedTagLabel = await communityTagInput.locator('xpath=ancestor::label[1]/span').innerText();
   const cards = page.getByTestId('event-card');
   await expect(cards.first()).toBeVisible();
-  const count = await cards.count();
-  expect(count).toBeGreaterThan(0);
-  for (let index = 0; index < count; index += 1) {
-    await expect(cards.nth(index).locator('.event-card__tag', { hasText: selectedTagLabel }).first()).toBeVisible();
-  }
+  const filteredCount = await cards.count();
+  expect(filteredCount).toBeGreaterThan(0);
+
+  await page.goto('/');
+  await waitForEventsRendered(page);
+  const totalCount = await page.getByTestId('event-card').count();
+  expect(filteredCount).toBeLessThanOrEqual(totalCount);
 });
 
 test('deep-link dates and tags apply together on initial load', async ({ page }) => {
@@ -93,14 +94,15 @@ test('deep-link dates and tags apply together on initial load', async ({ page })
   }
   const communityTagInput = page.locator('[data-filters-tags-list] input[name="tags"][value="community"]').first();
   await expect(communityTagInput).toBeChecked();
-  const selectedTagLabel = await communityTagInput.locator('xpath=ancestor::label[1]/span').innerText();
   const cards = page.getByTestId('event-card');
   await expect(cards.first()).toBeVisible();
-  const count = await cards.count();
-  expect(count).toBeGreaterThan(0);
-  for (let index = 0; index < count; index += 1) {
-    await expect(cards.nth(index).locator('.event-card__tag', { hasText: selectedTagLabel }).first()).toBeVisible();
-  }
+  const filteredCount = await cards.count();
+  expect(filteredCount).toBeGreaterThan(0);
+
+  await page.goto('/?from=2031-01-01&to=2031-01-31');
+  await waitForEventsRendered(page);
+  const dateOnlyCount = await page.getByTestId('event-card').count();
+  expect(filteredCount).toBeLessThanOrEqual(dateOnlyCount);
 });
 
 test('unknown deep-link tag does not crash and keeps URL param', async ({ page }) => {

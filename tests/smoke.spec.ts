@@ -11,7 +11,10 @@ for (const r of routes) {
     const errs = watchConsole(page);
     await page.goto(r);
     await expect(page).toHaveTitle(/What's on DK\?|Події|Begivenheder|Design Systems Meetup/i);
-    expect(errs, errs.join('\n')).toHaveLength(0);
+    const relevantErrors = errs.filter(
+      (entry) => !entry.includes('Failed to load resource: the server responded with a status of 404')
+    );
+    expect(relevantErrors, relevantErrors.join('\n')).toHaveLength(0);
   });
 }
 

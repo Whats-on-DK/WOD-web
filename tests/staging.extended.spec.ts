@@ -33,9 +33,11 @@ const openFirstEventDetail = async (page) => {
     return false;
   }
 
-  const detailLink = page.locator(`${cardSelector} .event-card__link`).first();
+  const detailLink = page.locator(`${cardSelector} .poster-card__cover-link`).first();
   await expect(detailLink).toBeVisible();
-  await detailLink.click();
+  const detailHref = await detailLink.getAttribute('href');
+  if (!detailHref) return false;
+  await page.goto(detailHref);
   await expect(page).toHaveURL(/event-card\.html\?id=/);
   return true;
 };

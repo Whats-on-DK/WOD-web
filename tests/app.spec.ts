@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { waitForEventsRendered } from './helpers';
 
 const setup = async (page) => {
   await page.goto('/');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+  await waitForEventsRendered(page);
 };
 
 test('theme toggle switches and restores theme', async ({ page }) => {

@@ -20,7 +20,9 @@ test('past events hidden by default and banner on detail', async ({ page }) => {
   if ((await pastCards.count()) === 0) {
     await expect(page.locator('.catalog-empty [data-i18n="empty_state"]')).toBeVisible();
   } else {
-    await pastCards.first().locator('.event-card__title a').click();
+    const detailHref = await pastCards.first().locator('.poster-card__cover-link').getAttribute('href');
+    expect(detailHref).toBeTruthy();
+    await page.goto(String(detailHref));
   }
 
   // Past event detail shows banner and swaps CTA
