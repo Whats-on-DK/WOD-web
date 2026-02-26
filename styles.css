@@ -596,7 +596,7 @@ button:disabled,
   display: grid;
   gap: 10px;
   width: 100%;
-  max-width: 231px;
+  max-width: 332px;
   justify-self: end;
 }
 
@@ -1984,7 +1984,7 @@ body:not(.is-admin) [data-admin-controls] {
 
 @media (max-width: 767px) {
   .hero-card {
-    max-width: min(62vw, 216px);
+    max-width: min(88vw, 312px);
     justify-self: end;
   }
 
@@ -2011,7 +2011,7 @@ body:not(.is-admin) [data-admin-controls] {
 
 @media (min-width: 1280px) {
   .hero-card {
-    max-width: 262px;
+    max-width: 377px;
   }
 }
 
