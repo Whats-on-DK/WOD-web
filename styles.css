@@ -596,7 +596,7 @@ button:disabled,
   display: grid;
   gap: 10px;
   width: 100%;
-  max-width: 300px;
+  max-width: 231px;
   justify-self: end;
 }
 
@@ -607,7 +607,7 @@ button:disabled,
 .hero-card__media {
   border-radius: 12px;
   width: 100%;
-  aspect-ratio: 2 / 3;
+  aspect-ratio: 3 / 4;
   min-height: 0;
   background-size: contain;
   background-position: center;
@@ -1984,7 +1984,7 @@ body:not(.is-admin) [data-admin-controls] {
 
 @media (max-width: 767px) {
   .hero-card {
-    max-width: min(72vw, 280px);
+    max-width: min(62vw, 216px);
     justify-self: end;
   }
 
@@ -2011,7 +2011,7 @@ body:not(.is-admin) [data-admin-controls] {
 
 @media (min-width: 1280px) {
   .hero-card {
-    max-width: 340px;
+    max-width: 262px;
   }
 }
 
