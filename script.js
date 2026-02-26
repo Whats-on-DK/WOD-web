@@ -1608,7 +1608,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           const city = isOnline
             ? formatMessage('online', {}) || 'Онлайн'
             : getLocalizedCity(event.city, event);
-          const dateLabel = formatShortDate(event.start);
+          const dateLabel = formatDateRange(event.start, event.end);
           const detailUrl = `event-card.html?id=${encodeURIComponent(event.id)}`;
           const cta = getRecommendedCta(event);
           const image =
@@ -1635,18 +1635,17 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
               <a class="highlights__card-link" href="${detailUrl}">
                 <div class="highlights__media">
                   ${imageMarkup}
-                  <div class="highlights__overlay">
-                    <div class="highlights__overlay-content">
-                      <span class="highlights__date">${dateLabel}</span>
-                      <div class="highlights__title-wrap">
-                        <h3>${title}</h3>
-                      </div>
-                      <span class="highlights__city">${city}</span>
-                    </div>
-                  </div>
                 </div>
               </a>
-              <a class="event-card__cta highlights__cta" href="${cta.href}" rel="noopener">${cta.label}</a>
+              <div class="recommended-card__body">
+                <h3 class="recommended-card__title">
+                  <a class="recommended-card__title-link" href="${detailUrl}">${title}</a>
+                </h3>
+                <div class="recommended-card__meta-row">
+                  <p class="recommended-card__meta">${dateLabel}${city ? ` · ${city}` : ''}</p>
+                  <a class="event-card__cta recommended-card__cta" href="${cta.href}" rel="noopener">${cta.label}</a>
+                </div>
+              </div>
             </article>
           `;
         })

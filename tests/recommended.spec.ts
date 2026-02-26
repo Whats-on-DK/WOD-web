@@ -240,6 +240,8 @@ test('admin sets event as recommended and it appears on homepage', async ({ page
   await expect(imageFrame).toBeVisible();
   await expect(recommendedCard.locator('.event-image-frame__bg')).toBeVisible();
   await expect(recommendedCard.locator('.event-image-frame__img')).toBeVisible();
+  await expect(recommendedCard.locator('.event-image-frame--recommended .highlights__overlay')).toHaveCount(0);
+  await expect(recommendedCard.locator('.recommended-card__title')).toBeVisible();
   const frameStyles = await imageFrame.evaluate((element) => {
     const frame = window.getComputedStyle(element as HTMLElement);
     const bg = window.getComputedStyle(
@@ -259,7 +261,28 @@ test('admin sets event as recommended and it appears on homepage', async ({ page
   expect(parseFloat(frameStyles.frameRadius)).toBeGreaterThan(0);
   expect(frameStyles.bgPosition).toBe('absolute');
   expect(frameStyles.imgObjectFit).toBe('contain');
-  await expect(recommendedCard.locator('.event-card__cta', { hasText: /Квитки|Реєстрація|Детальніше/ })).toBeVisible();
+  const cta = recommendedCard.locator('.recommended-card__cta', { hasText: /Квитки|Реєстрація|Детальніше/ }).first();
+  await expect(cta).toBeVisible();
+  const ctaWidths = await recommendedCard.evaluate((element) => {
+    const cardRect = (element as HTMLElement).getBoundingClientRect();
+    const ctaRect = ((element as HTMLElement).querySelector('.recommended-card__cta') as HTMLElement).getBoundingClientRect();
+    return { cardWidth: cardRect.width, ctaWidth: ctaRect.width };
+  });
+  expect(ctaWidths.ctaWidth).toBeLessThan(ctaWidths.cardWidth * 0.75);
+});
+
+test('recommended CTA labels follow paid/registration/details logic', async ({ page }) => {
+  await enableAdminSession(page);
+  await configureRecommendedApi(page, { initialOrder: ['evt-rec-1', 'evt-rec-2', 'evt-rec-3'] });
+
+  await page.goto('/?serverless=1');
+  const card1 = page.locator('.highlights__card', { hasText: 'Recommended Event 1' }).first();
+  const card2 = page.locator('.highlights__card', { hasText: 'Recommended Event 2' }).first();
+  const card3 = page.locator('.highlights__card', { hasText: 'Recommended Event 3' }).first();
+
+  await expect(card1.locator('.recommended-card__cta')).toHaveText(/Квитки/i);
+  await expect(card2.locator('.recommended-card__cta')).toHaveText(/Детальніше/i);
+  await expect(card3.locator('.recommended-card__cta')).toHaveText(/Реєстрація/i);
 });
 
 test('recommended reorder with up/down persists after refresh', async ({ page }) => {
