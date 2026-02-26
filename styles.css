@@ -671,10 +671,10 @@ button:disabled,
 }
 
 .poster-card--hero .poster-card__top {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
-    "when star"
-    "price star";
+    "when"
+    "price";
   align-items: start;
 }
 
@@ -686,11 +686,6 @@ button:disabled,
 .hero-card__price {
   grid-area: price;
   justify-self: start;
-}
-
-.poster-card--hero .save-star--hero {
-  grid-area: star;
-  align-self: start;
 }
 
 .hero-card__tags {
@@ -1405,10 +1400,6 @@ body:not(.is-admin) [data-admin-controls] {
   overflow: hidden;
 }
 
-.poster-card--catalog .poster-card__title {
-  margin-top: auto;
-}
-
 .poster-card__meta {
   margin: 0;
   color: rgba(248, 250, 252, 0.88);
@@ -1426,26 +1417,33 @@ body:not(.is-admin) [data-admin-controls] {
   pointer-events: auto;
 }
 
-.save-star--hero {
-  width: 30px;
-  height: 30px;
-  color: #f8fafc;
-  border-color: rgba(248, 250, 252, 0.38);
-  background: rgba(248, 250, 252, 0.08);
+.poster-card__bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.save-star--hero:hover,
-.save-star--hero:focus-visible {
-  color: #ffffff;
-  border-color: rgba(248, 250, 252, 0.62);
-  background: rgba(248, 250, 252, 0.2);
+.poster-card__bottom--center {
+  align-items: center;
+  text-align: center;
+}
+
+.poster-card__bottom--center .event-card__tags,
+.poster-card__bottom--center .hero-card__tags {
+  justify-content: center;
+}
+
+.poster-card__bottom--center .poster-card__cta {
+  align-self: center;
 }
 
 .poster-card__content .event-card__link,
 .poster-card__content .event-card__cta,
 .poster-card__content .btn,
 .poster-card__content [role="button"],
-.poster-card__content .star-btn {
+.poster-card__content .star-btn,
+.poster-card__content .save-star {
   pointer-events: auto;
 }
 
@@ -1907,28 +1905,15 @@ body:not(.is-admin) [data-admin-controls] {
 
 .recommended-poster__top {
   margin-bottom: 0;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
-    "when star"
-    "price star";
+    "when"
+    "price";
   align-items: start;
 }
 
 .recommended-poster__bottom {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
   gap: 8px;
-}
-
-.recommended-poster__bottom .event-card__tags {
-  justify-content: center;
-}
-
-.recommended-poster__bottom .poster-card__cta {
-  align-self: center;
 }
 
 .recommended-poster__when {
@@ -1941,24 +1926,7 @@ body:not(.is-admin) [data-admin-controls] {
   justify-self: start;
 }
 
-.save-star--recommended {
-  grid-area: star;
-  align-self: start;
-  width: 30px;
-  height: 30px;
-  color: #f8fafc;
-  border-color: rgba(248, 250, 252, 0.38);
-  background: rgba(248, 250, 252, 0.08);
-}
-
-.save-star--recommended:hover,
-.save-star--recommended:focus-visible {
-  color: #ffffff;
-  border-color: rgba(248, 250, 252, 0.62);
-  background: rgba(248, 250, 252, 0.2);
-}
-
-.save-star--recommended-mobile {
+.poster-card__media > .save-star {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -1968,11 +1936,10 @@ body:not(.is-admin) [data-admin-controls] {
   color: #f8fafc;
   border-color: rgba(248, 250, 252, 0.42);
   background: rgba(7, 10, 24, 0.48);
-  display: none;
 }
 
-.save-star--recommended-mobile:hover,
-.save-star--recommended-mobile:focus-visible {
+.poster-card__media > .save-star:hover,
+.poster-card__media > .save-star:focus-visible {
   color: #ffffff;
   border-color: rgba(248, 250, 252, 0.68);
   background: rgba(7, 10, 24, 0.68);
@@ -2012,10 +1979,6 @@ body:not(.is-admin) [data-admin-controls] {
     width: 100%;
     flex-basis: 100%;
     scroll-snap-align: start;
-  }
-
-  .save-star--recommended-mobile {
-    display: inline-flex;
   }
 
 }

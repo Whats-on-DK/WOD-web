@@ -84,31 +84,33 @@
             <div class="poster-card poster-card--hero">
               <div class="poster-card__media hero-card__media hero-card__media--placeholder" data-hero-media>
                 <a class="poster-card__cover-link" data-hero-link href="./#events" aria-label="Найближча подія"></a>
+                <button
+                  class="save-star save-star--hero-pin"
+                  type="button"
+                  data-action="toggle-saved"
+                  data-hero-save
+                  data-event-id=""
+                  data-saved="false"
+                  aria-label="Додати у вибрані"
+                  title="Додати у вибрані"
+                >
+                  <span aria-hidden="true">☆</span>
+                </button>
                 <div class="poster-card__overlay">
                   <div class="poster-card__content">
                     <div class="poster-card__top">
                       <span class="poster-card__when hero-card__when" data-hero-when>Сьогодні · 19:00</span>
                       <span class="poster-card__price hero-card__price" data-hero-price>Ціна уточнюється</span>
-                      <button
-                        class="save-star save-star--hero"
-                        type="button"
-                        data-action="toggle-saved"
-                        data-hero-save
-                        data-event-id=""
-                        data-saved="false"
-                        aria-label="Додати у вибрані"
-                        title="Додати у вибрані"
-                      >
-                        <span aria-hidden="true">☆</span>
-                      </button>
                     </div>
-                    <p class="poster-card__title hero-card__title" data-hero-title>Design Systems Meetup</p>
-                    <p class="poster-card__meta hero-card__meta" data-hero-meta>Kyiv · Fri 7:00 PM</p>
-                    <div class="hero-card__tags" data-hero-tags>
-                      <span>Community</span>
-                      <span>Workshop</span>
+                    <div class="poster-card__bottom poster-card__bottom--center">
+                      <p class="poster-card__title hero-card__title" data-hero-title>Design Systems Meetup</p>
+                      <p class="poster-card__meta hero-card__meta" data-hero-meta>Kyiv · Fri 7:00 PM</p>
+                      <div class="hero-card__tags" data-hero-tags>
+                        <span>Community</span>
+                        <span>Workshop</span>
+                      </div>
+                      <a class="event-card__cta poster-card__cta" data-hero-cta href="./#events">Детальніше</a>
                     </div>
-                    <a class="event-card__cta poster-card__cta" data-hero-cta href="./#events">Детальніше</a>
                   </div>
                 </div>
               </div>

@@ -102,6 +102,7 @@ export const EventCard = (event, helpers) => {
             <div class="poster-card__media">
               ${imageMarkup}
               <a class="poster-card__cover-link" href="${detailUrl}" aria-label="${title}"></a>
+              ${renderStarButton(event.id, 'catalog')}
               <div class="poster-card__overlay">
                 <div class="poster-card__content">
                   <div class="event-card__meta">
@@ -109,18 +110,17 @@ export const EventCard = (event, helpers) => {
                       <span class="event-card__datetime">${formatDateRange(event.start, event.end)}</span>
                       <span class="event-card__price ${priceInfo.className}">${priceInfo.label}</span>
                     </div>
-                    <div class="event-card__meta-right">
-                      ${renderStarButton(event.id, 'catalog')}
-                    </div>
                   </div>
-                  <h3 class="poster-card__title event-card__title">
-                    <a class="event-card__link" href="${detailUrl}">${title}</a>
-                  </h3>
-                  <p class="poster-card__meta event-card__location">${location}</p>
-                  ${languageMarkup}
-                  ${firstTagMarkup}
-                  <div class="event-card__actions">
-                    <a class="event-card__cta ${cta.className}" href="${cta.href}" rel="noopener" data-testid="ticket-cta">${cta.label}</a>
+                  <div class="poster-card__bottom poster-card__bottom--center">
+                    <h3 class="poster-card__title event-card__title">
+                      <a class="event-card__link" href="${detailUrl}">${title}</a>
+                    </h3>
+                    <p class="poster-card__meta event-card__location">${location}</p>
+                    ${languageMarkup}
+                    ${firstTagMarkup}
+                    <div class="event-card__actions">
+                      <a class="event-card__cta ${cta.className}" href="${cta.href}" rel="noopener" data-testid="ticket-cta">${cta.label}</a>
+                    </div>
                   </div>
                 </div>
               </div>

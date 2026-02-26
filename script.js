@@ -1643,7 +1643,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
                   ${posterMarkup}
                 </a>
                 <button
-                  class="save-star save-star--recommended-mobile"
+                  class="save-star save-star--recommended-pin"
                   type="button"
                   data-action="toggle-saved"
                   data-event-id="${event.id}"
@@ -1659,20 +1659,8 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
                     <div class="poster-card__top recommended-poster__top">
                       <span class="poster-card__when recommended-poster__when">${dateLabel}</span>
                       <span class="poster-card__price recommended-poster__price">${priceLabel}</span>
-                      <button
-                        class="save-star save-star--recommended"
-                        type="button"
-                        data-action="toggle-saved"
-                        data-event-id="${event.id}"
-                        data-context="recommended"
-                        data-saved="false"
-                        aria-label="Додати у вибрані"
-                        title="Додати у вибрані"
-                      >
-                        <span aria-hidden="true">☆</span>
-                      </button>
                     </div>
-                    <div class="recommended-poster__bottom">
+                    <div class="recommended-poster__bottom poster-card__bottom poster-card__bottom--center">
                       <h3 class="poster-card__title recommended-poster__title">${title}</h3>
                       <p class="poster-card__meta recommended-poster__meta">${city || ''}</p>
                       ${languageLabel ? `<p class="poster-card__meta recommended-poster__meta">${languageLabel}</p>` : ''}
