@@ -3896,26 +3896,56 @@ body[data-admin-auth="denied"] [data-admin-protected] {
 }
 
 .partners__stage {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.75rem;
+  display: block;
+  gap: 0;
   align-items: center;
 }
 
 .partners__viewport {
-  overflow: hidden;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.partners__viewport::-webkit-scrollbar {
+  display: none;
 }
 
 .partners__track {
-  --partners-visible: 3;
   display: flex;
-  transition: transform 0.35s ease;
+  gap: 12px;
+}
+
+.partners__viewport--marquee {
+  overflow: hidden;
+}
+
+.partners__track--marquee {
+  width: max-content;
   will-change: transform;
+  animation: partners-marquee var(--partners-marquee-duration, 24s) linear infinite;
+}
+
+.partners__viewport--marquee:hover .partners__track--marquee,
+.partners__viewport--marquee:focus-within .partners__track--marquee,
+.partners__viewport--marquee.is-paused .partners__track--marquee {
+  animation-play-state: paused;
+}
+
+@keyframes partners-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-1 * var(--partners-marquee-distance, 50%)));
+  }
 }
 
 .partner-card {
-  flex: 0 0 calc(100% / var(--partners-visible));
-  padding: 0.5rem;
+  flex: 0 0 min(280px, calc((100vw - 96px) / 3));
+  padding: 0;
 }
 
 .partner-card__inner {
@@ -3940,6 +3970,10 @@ body[data-admin-auth="denied"] [data-admin-protected] {
   border-radius: 12px;
   background: rgba(148, 163, 184, 0.1);
   display: block;
+}
+
+.partners__arrow {
+  display: none !important;
 }
 
 .partner-detail {
@@ -4170,13 +4204,18 @@ body[data-admin-auth="denied"] [data-admin-protected] {
 }
 
 @media (max-width: 1023px) {
-  .partners__track {
-    --partners-visible: 2;
+  .partner-card {
+    flex-basis: min(280px, calc((100vw - 72px) / 2));
   }
 }
 
 @media (max-width: 767px) {
-  .partners__track {
-    --partners-visible: 1;
+  .partners__viewport {
+    scroll-snap-type: x mandatory;
+  }
+
+  .partner-card {
+    flex-basis: 100%;
+    scroll-snap-align: start;
   }
 }

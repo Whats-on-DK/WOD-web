@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { enableAdminSession } from './helpers';
 
-test('homepage renders partners section and carousel arrows move cards', async ({ page }) => {
+test('homepage renders partners section without arrow controls', async ({ page }) => {
   await page.setViewportSize({ width: 960, height: 900 });
   await page.goto('/');
   const section = page.locator('[data-partners-section]');
@@ -9,10 +9,10 @@ test('homepage renders partners section and carousel arrows move cards', async (
 
   const prev = page.locator('[data-partners-prev]');
   const next = page.locator('[data-partners-next]');
-  await expect(next).toBeEnabled();
-  await expect(prev).toBeDisabled();
-  await next.click();
-  await expect(prev).toBeEnabled();
+  await expect(prev).toHaveCount(0);
+  await expect(next).toHaveCount(0);
+  const count = await page.locator('.partner-card').count();
+  expect(count).toBeGreaterThan(0);
 });
 
 test('partner without detail page opens external site in new tab', async ({ page }) => {

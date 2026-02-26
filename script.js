@@ -3191,17 +3191,23 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
 
     const partnersSection = document.querySelector('[data-partners-section]');
     const partnersTrack = partnersSection?.querySelector('[data-partners-track]');
+    const partnersViewport = partnersSection?.querySelector('.partners__viewport');
     const partnersPrev = partnersSection?.querySelector('[data-partners-prev]');
     const partnersNext = partnersSection?.querySelector('[data-partners-next]');
+    const partnersDesktopQuery = window.matchMedia('(min-width: 768px)');
+    const partnersMobileQuery = window.matchMedia('(max-width: 767px)');
     let partnersItems = [];
-    let partnersIndex = 0;
-    let partnersTimer = null;
-    let partnersAutoPaused = false;
+    let partnersCarouselTeardown = () => {};
 
-    const getPartnersVisible = () => {
-      if (window.innerWidth < 768) return 1;
-      if (window.innerWidth < 1024) return 2;
-      return 3;
+    const hidePartnersArrows = () => {
+      if (partnersPrev instanceof HTMLButtonElement) {
+        partnersPrev.hidden = true;
+        partnersPrev.disabled = true;
+      }
+      if (partnersNext instanceof HTMLButtonElement) {
+        partnersNext.hidden = true;
+        partnersNext.disabled = true;
+      }
     };
 
     const getPartnerLogoUrl = (partner) =>
@@ -3220,49 +3226,18 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       return Boolean(description || forWhom.length || bonus || faq.length || ctaLabel || ctaUrl);
     };
 
-    const updatePartnersState = () => {
-      if (!partnersSection || !partnersTrack) return;
-      const visible = getPartnersVisible();
-      const maxIndex = Math.max(0, partnersItems.length - visible);
-      partnersIndex = Math.max(0, Math.min(partnersIndex, maxIndex));
-      partnersTrack.style.setProperty('--partners-visible', String(visible));
-      partnersTrack.style.transform = `translateX(-${partnersIndex * (100 / visible)}%)`;
-      if (partnersPrev instanceof HTMLButtonElement) {
-        partnersPrev.disabled = partnersIndex <= 0;
-      }
-      if (partnersNext instanceof HTMLButtonElement) {
-        partnersNext.disabled = partnersIndex >= maxIndex;
-      }
-    };
-
-    const stopPartnersAutoplay = () => {
-      if (partnersTimer) {
-        window.clearInterval(partnersTimer);
-        partnersTimer = null;
-      }
-    };
-
-    const startPartnersAutoplay = () => {
-      if (!partnersSection || partnersAutoPaused) return;
-      stopPartnersAutoplay();
-      const visible = getPartnersVisible();
-      if (partnersItems.length <= visible) return;
-      partnersTimer = window.setInterval(() => {
-        const maxIndex = Math.max(0, partnersItems.length - getPartnersVisible());
-        partnersIndex = partnersIndex >= maxIndex ? 0 : partnersIndex + 1;
-        updatePartnersState();
-      }, 6000);
-    };
-
     const renderPartners = (partners) => {
-      if (!partnersSection || !partnersTrack) return;
+      if (!partnersSection || !partnersTrack || !(partnersViewport instanceof HTMLElement)) return;
+      partnersCarouselTeardown();
+      partnersCarouselTeardown = () => {};
       partnersItems = Array.isArray(partners) ? partners : [];
       if (!partnersItems.length) {
         partnersSection.hidden = true;
         return;
       }
       partnersSection.hidden = false;
-      partnersTrack.innerHTML = partnersItems
+      hidePartnersArrows();
+      const cardMarkup = partnersItems
         .map((partner) => {
           const name = String(partner?.name || '').trim();
           const slug = normalizePartnerSlug(partner?.slug || name);
@@ -3286,9 +3261,186 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           `;
         })
         .join('');
-      partnersIndex = 0;
-      updatePartnersState();
-      startPartnersAutoplay();
+      partnersTrack.innerHTML = cardMarkup;
+
+      let resumeTimer = null;
+      let autoplayTimer = null;
+      let currentIndex = 0;
+      let marqueeActive = false;
+      let resizeRaf = null;
+      const baseMarkup = cardMarkup;
+      const getCards = () =>
+        Array.from(partnersTrack.querySelectorAll('.partner-card')).filter(
+          (card) => card instanceof HTMLElement
+        );
+      const getSnapPoints = () =>
+        getCards().map((card) => card.offsetLeft).filter((value) => Number.isFinite(value));
+      const clearAutoplay = () => {
+        if (autoplayTimer) {
+          window.clearInterval(autoplayTimer);
+          autoplayTimer = null;
+        }
+      };
+      const clearMarqueeMode = () => {
+        marqueeActive = false;
+        partnersViewport.classList.remove('partners__viewport--marquee', 'is-paused');
+        partnersTrack.classList.remove('partners__track--marquee');
+        partnersTrack.style.removeProperty('--partners-marquee-distance');
+        partnersTrack.style.removeProperty('--partners-marquee-duration');
+        partnersTrack.innerHTML = baseMarkup;
+      };
+      const enableMarqueeMode = () => {
+        clearAutoplay();
+        const canMarquee =
+          partnersDesktopQuery.matches && !reducedMotionQuery.matches && partnersItems.length > 3;
+        if (!canMarquee) {
+          clearMarqueeMode();
+          return false;
+        }
+        marqueeActive = true;
+        partnersViewport.classList.add('partners__viewport--marquee');
+        partnersTrack.classList.add('partners__track--marquee');
+        partnersTrack.innerHTML = `${baseMarkup}${baseMarkup}`;
+        const halfWidth = partnersTrack.scrollWidth / 2;
+        if (!Number.isFinite(halfWidth) || halfWidth <= 0) {
+          clearMarqueeMode();
+          return false;
+        }
+        const speedPxPerSec = 44;
+        const durationSec = Math.max(halfWidth / speedPxPerSec, 12);
+        partnersTrack.style.setProperty('--partners-marquee-distance', `${halfWidth}px`);
+        partnersTrack.style.setProperty('--partners-marquee-duration', `${durationSec}s`);
+        return true;
+      };
+      const getNearestIndex = (points) => {
+        const left = partnersViewport.scrollLeft;
+        let nearest = 0;
+        let minDiff = Number.POSITIVE_INFINITY;
+        points.forEach((point, index) => {
+          const diff = Math.abs(point - left);
+          if (diff < minDiff) {
+            minDiff = diff;
+            nearest = index;
+          }
+        });
+        return nearest;
+      };
+      const startAutoplay = () => {
+        if (marqueeActive) {
+          clearAutoplay();
+          return;
+        }
+        const points = getSnapPoints();
+        const hasOverflow = partnersViewport.scrollWidth - partnersViewport.clientWidth > 4;
+        const canAutoplay =
+          partnersMobileQuery.matches &&
+          !reducedMotionQuery.matches &&
+          hasOverflow &&
+          points.length > 1 &&
+          partnersItems.length > 1;
+        clearAutoplay();
+        if (!canAutoplay) return;
+        autoplayTimer = window.setInterval(() => {
+          const nextPoints = getSnapPoints();
+          if (nextPoints.length <= 1) return;
+          currentIndex = getNearestIndex(nextPoints);
+          const nextIndex = (currentIndex + 1) % nextPoints.length;
+          partnersViewport.scrollTo({ left: nextPoints[nextIndex], behavior: 'smooth' });
+          currentIndex = nextIndex;
+        }, 5000);
+      };
+      const setPaused = (paused) => {
+        partnersViewport.classList.toggle('is-paused', paused);
+        if (marqueeActive) return;
+        if (paused) {
+          clearAutoplay();
+        } else {
+          startAutoplay();
+        }
+      };
+      const resumeAfterIdle = () => {
+        if (resumeTimer) window.clearTimeout(resumeTimer);
+        resumeTimer = window.setTimeout(() => setPaused(false), 1400);
+      };
+      const handleViewportChange = () => {
+        if (resizeRaf) window.cancelAnimationFrame(resizeRaf);
+        resizeRaf = window.requestAnimationFrame(() => {
+          resizeRaf = null;
+          const marqueeEnabled = enableMarqueeMode();
+          if (marqueeEnabled) return;
+          const points = getSnapPoints();
+          if (points.length > 0) {
+            currentIndex = Math.min(getNearestIndex(points), points.length - 1);
+          }
+          startAutoplay();
+        });
+      };
+      const onPointerDown = () => setPaused(true);
+      const onPointerUp = () => resumeAfterIdle();
+      const onWheel = () => setPaused(true);
+      const onMouseEnter = () => setPaused(true);
+      const onMouseLeave = () => setPaused(false);
+      const onFocusIn = () => setPaused(true);
+      const onFocusOut = () => {
+        if (!partnersViewport.contains(document.activeElement)) {
+          setPaused(false);
+        }
+      };
+      const onScroll = () => {
+        setPaused(true);
+        resumeAfterIdle();
+      };
+
+      handleViewportChange();
+      partnersViewport.addEventListener('pointerdown', onPointerDown);
+      partnersViewport.addEventListener('pointerup', onPointerUp);
+      partnersViewport.addEventListener('pointercancel', onPointerUp);
+      partnersViewport.addEventListener('touchstart', onPointerDown, { passive: true });
+      partnersViewport.addEventListener('touchend', onPointerUp, { passive: true });
+      partnersViewport.addEventListener('wheel', onWheel, { passive: true });
+      partnersViewport.addEventListener('mouseenter', onMouseEnter);
+      partnersViewport.addEventListener('mouseleave', onMouseLeave);
+      partnersViewport.addEventListener('focusin', onFocusIn);
+      partnersViewport.addEventListener('focusout', onFocusOut);
+      partnersViewport.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', handleViewportChange);
+      if (typeof partnersDesktopQuery.addEventListener === 'function') {
+        partnersDesktopQuery.addEventListener('change', handleViewportChange);
+      }
+      if (typeof partnersMobileQuery.addEventListener === 'function') {
+        partnersMobileQuery.addEventListener('change', handleViewportChange);
+      }
+      if (typeof reducedMotionQuery.addEventListener === 'function') {
+        reducedMotionQuery.addEventListener('change', handleViewportChange);
+      }
+
+      partnersCarouselTeardown = () => {
+        if (resumeTimer) window.clearTimeout(resumeTimer);
+        if (resizeRaf) window.cancelAnimationFrame(resizeRaf);
+        clearAutoplay();
+        clearMarqueeMode();
+        partnersViewport.removeEventListener('pointerdown', onPointerDown);
+        partnersViewport.removeEventListener('pointerup', onPointerUp);
+        partnersViewport.removeEventListener('pointercancel', onPointerUp);
+        partnersViewport.removeEventListener('touchstart', onPointerDown);
+        partnersViewport.removeEventListener('touchend', onPointerUp);
+        partnersViewport.removeEventListener('wheel', onWheel);
+        partnersViewport.removeEventListener('mouseenter', onMouseEnter);
+        partnersViewport.removeEventListener('mouseleave', onMouseLeave);
+        partnersViewport.removeEventListener('focusin', onFocusIn);
+        partnersViewport.removeEventListener('focusout', onFocusOut);
+        partnersViewport.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', handleViewportChange);
+        if (typeof partnersDesktopQuery.removeEventListener === 'function') {
+          partnersDesktopQuery.removeEventListener('change', handleViewportChange);
+        }
+        if (typeof partnersMobileQuery.removeEventListener === 'function') {
+          partnersMobileQuery.removeEventListener('change', handleViewportChange);
+        }
+        if (typeof reducedMotionQuery.removeEventListener === 'function') {
+          reducedMotionQuery.removeEventListener('change', handleViewportChange);
+        }
+      };
     };
 
     const loadPartners = async () => {
@@ -3315,57 +3467,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       }
     };
 
-    if (partnersPrev instanceof HTMLButtonElement) {
-      partnersPrev.addEventListener('click', () => {
-        partnersIndex -= 1;
-        updatePartnersState();
-      });
-    }
-    if (partnersNext instanceof HTMLButtonElement) {
-      partnersNext.addEventListener('click', () => {
-        partnersIndex += 1;
-        updatePartnersState();
-      });
-    }
-    window.addEventListener('resize', () => {
-      updatePartnersState();
-      startPartnersAutoplay();
-    });
-
-    if (partnersTrack instanceof HTMLElement) {
-      partnersTrack.addEventListener('mouseover', (event) => {
-        const target = event.target;
-        if (!(target instanceof Element)) return;
-        if (!target.closest('.partner-card')) return;
-        partnersAutoPaused = true;
-        stopPartnersAutoplay();
-      });
-      partnersTrack.addEventListener('mouseout', (event) => {
-        const target = event.target;
-        if (!(target instanceof Element)) return;
-        const fromCard = target.closest('.partner-card');
-        if (!fromCard) return;
-        const nextTarget = event.relatedTarget;
-        if (nextTarget instanceof Element && nextTarget.closest('.partner-card') === fromCard) {
-          return;
-        }
-        partnersAutoPaused = false;
-        startPartnersAutoplay();
-      });
-      partnersTrack.addEventListener('focusin', (event) => {
-        const target = event.target;
-        if (!(target instanceof Element)) return;
-        if (!target.closest('.partner-card')) return;
-        partnersAutoPaused = true;
-        stopPartnersAutoplay();
-      });
-      partnersTrack.addEventListener('focusout', () => {
-        const active = document.activeElement;
-        if (active instanceof Element && partnersTrack.contains(active)) return;
-        partnersAutoPaused = false;
-        startPartnersAutoplay();
-      });
-    }
+    hidePartnersArrows();
 
     queueMicrotask(loadEvents);
     queueMicrotask(loadRecommended);
