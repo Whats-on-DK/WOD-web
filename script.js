@@ -1268,6 +1268,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
     const heroMeta = document.querySelector('[data-hero-meta]');
     const heroTags = document.querySelector('[data-hero-tags]');
     const heroLink = document.querySelector('[data-hero-link]');
+    const heroCta = document.querySelector('[data-hero-cta]');
     const heroMedia = document.querySelector('[data-hero-media]');
     const pastHint = document.querySelector('[data-past-hint]');
     const advancedToggle = document.querySelector('[data-action="filters-advanced"]');
@@ -1624,21 +1625,23 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
             event.image_url ||
             '';
           const posterMarkup = image
-            ? `<img class="recommended-poster__img" src="${image}" alt="${title}" loading="lazy" width="360" height="540" />`
-            : '<div class="recommended-poster__placeholder" aria-hidden="true"></div>';
+            ? `<img class="poster-card__img recommended-poster__img" src="${image}" alt="${title}" loading="lazy" width="360" height="540" />`
+            : '<div class="poster-card__placeholder recommended-poster__placeholder" aria-hidden="true"></div>';
 
           return `
             <article class="highlights__card highlights__card--recommended" data-recommended-id="${event.id}">
-              <div class="recommended-poster">
-                <a class="recommended-poster__detail-link" href="${detailUrl}" aria-label="${title}">
+              <div class="poster-card poster-card--recommended recommended-poster">
+                <div class="poster-card__media">
+                <a class="poster-card__cover-link recommended-poster__detail-link" href="${detailUrl}" aria-label="${title}">
                   ${posterMarkup}
                 </a>
-                <div class="recommended-poster__overlay">
-                  <div class="recommended-poster__overlay-content">
-                    <h3 class="recommended-poster__title">${title}</h3>
-                    <p class="recommended-poster__meta">${dateLabel}${city ? ` · ${city}` : ''}</p>
-                    <a class="event-card__cta recommended-poster__cta" href="${cta.href}" rel="noopener">${cta.label}</a>
+                <div class="poster-card__overlay recommended-poster__overlay">
+                  <div class="poster-card__content recommended-poster__overlay-content">
+                    <h3 class="poster-card__title recommended-poster__title">${title}</h3>
+                    <p class="poster-card__meta recommended-poster__meta">${dateLabel}${city ? ` · ${city}` : ''}</p>
+                    <a class="event-card__cta poster-card__cta recommended-poster__cta" href="${cta.href}" rel="noopener">${cta.label}</a>
                   </div>
+                </div>
                 </div>
               </div>
             </article>
@@ -1846,11 +1849,16 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           heroStatus.hidden = true;
         }
         if (heroKicker) {
-          heroKicker.textContent = formatMessage('hero_next_up', {});
+          heroKicker.textContent = formatMessage('hero_next_up', {}) || 'Найближча подія';
         }
         if (heroLink) {
           heroLink.setAttribute('href', './#events');
           heroLink.setAttribute('aria-disabled', 'true');
+          heroLink.setAttribute('aria-label', formatMessage('next_up_empty', {}));
+        }
+        if (heroCta instanceof HTMLAnchorElement) {
+          heroCta.setAttribute('href', './#events');
+          heroCta.textContent = formatMessage('cta_details', {}) || 'Детальніше';
         }
         return;
       }
@@ -1859,6 +1867,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       const timeLabel = formatDateRange(event.start, event.end);
       heroTitle.textContent = title;
       heroMeta.textContent = city ? `${city} · ${timeLabel}` : timeLabel;
+      const heroCtaMeta = getRecommendedCta(event);
       if (heroMedia) {
         const image =
           (event.images && event.images.length ? event.images[0] : '') ||
@@ -1896,6 +1905,11 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       if (heroLink) {
         heroLink.setAttribute('href', `event-card.html?id=${encodeURIComponent(event.id)}`);
         heroLink.removeAttribute('aria-disabled');
+        heroLink.setAttribute('aria-label', title);
+      }
+      if (heroCta instanceof HTMLAnchorElement) {
+        heroCta.setAttribute('href', heroCtaMeta.href);
+        heroCta.textContent = heroCtaMeta.label;
       }
       if (heroStatus) {
         heroStatus.hidden = !isLive;
@@ -1904,7 +1918,11 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         }
       }
       if (heroKicker) {
-        heroKicker.textContent = formatMessage(isLive ? 'hero_live_kicker' : 'hero_next_up', {});
+        if (isLive) {
+          heroKicker.textContent = formatMessage('hero_live_kicker', {});
+        } else {
+          heroKicker.textContent = formatMessage('hero_next_up', {}) || 'Найближча подія';
+        }
       }
     };
 

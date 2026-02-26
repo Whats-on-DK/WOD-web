@@ -239,7 +239,7 @@ test('admin sets event as recommended and it appears on homepage', async ({ page
     'href',
     /event-card\.html\?id=evt-rec-1/
   );
-  const poster = recommendedCard.locator('.recommended-poster').first();
+  const poster = recommendedCard.locator('.poster-card__media').first();
   await expect(poster).toBeVisible();
   await expect(recommendedCard.locator('.recommended-poster__img')).toBeVisible();
   const frameStyles = await poster.evaluate((element) => {

@@ -54,8 +54,8 @@ export const EventCard = (event, helpers) => {
     ? helpers.getLanguageLabel(event.language)
     : event.language || '';
   const imageMarkup = image
-    ? `<img class="event-card__image" src="${image}" alt="${title}" loading="lazy" width="800" height="540" />`
-    : '<div class="event-card__image event-card__image--placeholder" aria-hidden="true"></div>';
+    ? `<img class="poster-card__img event-card__image" src="${image}" alt="${title}" loading="lazy" width="800" height="1200" />`
+    : '<div class="poster-card__placeholder event-card__image event-card__image--placeholder" aria-hidden="true"></div>';
   const cardClass = `event-card ${isFree ? 'event-card--free' : 'event-card--paid'}${
     pastEvent || archivedEvent ? ' event-card--archived' : ''
   }`;
@@ -64,13 +64,27 @@ export const EventCard = (event, helpers) => {
     ? `<span class="event-card__status" aria-label="${archivedLabel}">${archivedLabel}</span>`
     : '';
   const baseTags = getTagList(event.tags);
-  const tags = baseTags.map((tag) => buildTagMarkup(tag, helpers)).join('');
-  const ticketKey = event.priceType === 'free' ? 'register_cta' : 'ticket_cta';
-  const ticketLabel = formatMessage(ticketKey, {});
+  const firstTag = baseTags.length ? buildTagMarkup(baseTags[0], helpers) : '';
   const rawTicketUrl = event.ticketUrl || '';
-  const showTicketCta = event.priceType !== 'free' || Boolean(rawTicketUrl);
-  const ticketUrl = rawTicketUrl || '#';
   const detailUrl = `event-card.html?id=${encodeURIComponent(event.id)}`;
+  const cta =
+    event.priceType !== 'free'
+      ? {
+          label: formatMessage('ticket_cta', {}),
+          href: rawTicketUrl || detailUrl,
+          className: 'event-card__cta--ticket'
+        }
+      : rawTicketUrl
+        ? {
+            label: formatMessage('register_cta', {}),
+            href: rawTicketUrl,
+            className: 'event-card__cta--ticket'
+          }
+        : {
+            label: formatMessage('cta_details', {}),
+            href: detailUrl,
+            className: 'event-card__cta--details'
+          };
   const formatValue = String(event.format || '').toLowerCase();
   const onlineLocationText = [event.address, event.venue].filter(Boolean).join(' ');
   const isOnline = formatValue.includes('online') || ONLINE_PATTERN.test(onlineLocationText);
@@ -80,31 +94,36 @@ export const EventCard = (event, helpers) => {
   const location = cityLabel ? cityLabel : '';
   const languageMarkup = languageLabel ? `<p class="event-card__language">${languageLabel}</p>` : '';
   const statusLabel = archivedEvent ? 'archived' : pastEvent ? 'past' : 'active';
+  const firstTagMarkup = firstTag ? `<div class="event-card__tags">${firstTag}</div>` : '';
   return `
         <article class="${cardClass}" data-event-id="${event.id}" data-status="${statusLabel}" data-testid="event-card">
           ${archivedMarkup}
-          ${imageMarkup}
-          <div class="event-card__body">
-            <div class="event-card__meta">
-              <div class="event-card__meta-left">
-                <span class="event-card__datetime">${formatDateRange(event.start, event.end)}</span>
-                <span class="event-card__price ${priceInfo.className}">${priceInfo.label}</span>
+          <div class="poster-card poster-card--catalog">
+            <div class="poster-card__media">
+              ${imageMarkup}
+              <a class="poster-card__cover-link" href="${detailUrl}" aria-label="${title}"></a>
+              <div class="poster-card__overlay">
+                <div class="poster-card__content">
+                  <div class="event-card__meta">
+                    <div class="event-card__meta-left">
+                      <span class="event-card__datetime">${formatDateRange(event.start, event.end)}</span>
+                      <span class="event-card__price ${priceInfo.className}">${priceInfo.label}</span>
+                    </div>
+                    <div class="event-card__meta-right">
+                      ${renderStarButton(event.id, 'catalog')}
+                    </div>
+                  </div>
+                  <h3 class="poster-card__title event-card__title">
+                    <a class="event-card__link" href="${detailUrl}">${title}</a>
+                  </h3>
+                  <p class="poster-card__meta event-card__location">${location}</p>
+                  ${languageMarkup}
+                  ${firstTagMarkup}
+                  <div class="event-card__actions">
+                    <a class="event-card__cta ${cta.className}" href="${cta.href}" rel="noopener" data-testid="ticket-cta">${cta.label}</a>
+                  </div>
+                </div>
               </div>
-              <div class="event-card__meta-right">
-                ${renderStarButton(event.id, 'catalog')}
-              </div>
-            </div>
-            <h3 class="event-card__title">
-              <a class="event-card__link" href="${detailUrl}">${title}</a>
-            </h3>
-            <p class="event-card__location">${location}</p>
-            ${languageMarkup}
-            <div class="event-card__tags">
-              ${tags}
-            </div>
-            <div class="event-card__actions">
-              ${showTicketCta ? `<a class="event-card__cta event-card__cta--ticket" href="${ticketUrl}" rel="noopener" data-testid="ticket-cta" data-i18n="${ticketKey}">${ticketLabel}</a>` : ''}
-              <a class="event-card__cta event-card__cta--details" href="${detailUrl}" data-i18n="cta_details">${formatMessage('cta_details', {})}</a>
             </div>
           </div>
         </article>
