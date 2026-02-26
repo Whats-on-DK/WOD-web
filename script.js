@@ -1266,9 +1266,12 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
     const primarySearchInput = searchInputs[0] || null;
     const heroTitle = document.querySelector('[data-hero-title]');
     const heroMeta = document.querySelector('[data-hero-meta]');
+    const heroWhen = document.querySelector('[data-hero-when]');
+    const heroPrice = document.querySelector('[data-hero-price]');
     const heroTags = document.querySelector('[data-hero-tags]');
     const heroLink = document.querySelector('[data-hero-link]');
     const heroCta = document.querySelector('[data-hero-cta]');
+    const heroSaveButton = document.querySelector('[data-hero-save]');
     const heroMedia = document.querySelector('[data-hero-media]');
     const pastHint = document.querySelector('[data-past-hint]');
     const advancedToggle = document.querySelector('[data-action="filters-advanced"]');
@@ -1839,6 +1842,12 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       if (!event) {
         heroTitle.textContent = formatMessage('next_up_empty', {});
         heroMeta.textContent = '';
+        if (heroWhen) {
+          heroWhen.textContent = '';
+        }
+        if (heroPrice) {
+          heroPrice.textContent = formatPriceLabel('', null, null);
+        }
         heroTags.innerHTML = '';
         heroTags.hidden = true;
         if (heroMedia) {
@@ -1860,13 +1869,30 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           heroCta.setAttribute('href', './#events');
           heroCta.textContent = formatMessage('cta_details', {}) || 'Детальніше';
         }
+        if (heroSaveButton instanceof HTMLButtonElement) {
+          heroSaveButton.dataset.eventId = '';
+          heroSaveButton.disabled = true;
+          syncSavedStarButton(heroSaveButton);
+        }
         return;
       }
       const title = getLocalizedEventTitle(event);
-      const city = getLocalizedCity(event.city);
+      const formatValue = String(event.format || '').toLowerCase();
+      const onlineHint = [event.address, event.venue].some((value) =>
+        /zoom|google meet|meet\.google|teams\.microsoft|teams|online|webinar/i.test(String(value || ''))
+      );
+      const isOnline = formatValue.includes('online') || onlineHint;
+      const city = isOnline ? formatMessage('online', {}) || 'Онлайн' : getLocalizedCity(event.city);
       const timeLabel = formatDateRange(event.start, event.end);
+      const priceLabel = formatPriceLabel(event.priceType || '', event.priceMin, event.priceMax);
       heroTitle.textContent = title;
-      heroMeta.textContent = city ? `${city} · ${timeLabel}` : timeLabel;
+      heroMeta.textContent = city || '';
+      if (heroWhen) {
+        heroWhen.textContent = timeLabel;
+      }
+      if (heroPrice) {
+        heroPrice.textContent = priceLabel;
+      }
       const heroCtaMeta = getRecommendedCta(event);
       if (heroMedia) {
         const image =
@@ -1910,6 +1936,11 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       if (heroCta instanceof HTMLAnchorElement) {
         heroCta.setAttribute('href', heroCtaMeta.href);
         heroCta.textContent = heroCtaMeta.label;
+      }
+      if (heroSaveButton instanceof HTMLButtonElement) {
+        heroSaveButton.dataset.eventId = String(event.id || '');
+        heroSaveButton.disabled = !event.id;
+        syncSavedStarButton(heroSaveButton);
       }
       if (heroStatus) {
         heroStatus.hidden = !isLive;
@@ -1969,6 +2000,17 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         renderHeroCard(getNextUpcomingEvent(payload), false);
       }
     };
+
+    if (heroSaveButton instanceof HTMLButtonElement) {
+      heroSaveButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        const eventId = String(heroSaveButton.dataset.eventId || '').trim();
+        if (!eventId) return;
+        const saved = toggleSaved(eventId);
+        syncSavedStarButton(heroSaveButton);
+        showSavedToast(saved);
+      });
+    }
 
     const updateCount = (count) => {
       if (resultsCount) {

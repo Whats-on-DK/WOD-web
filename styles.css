@@ -595,6 +595,9 @@ button:disabled,
   box-shadow: var(--shadow);
   display: grid;
   gap: 10px;
+  width: 100%;
+  max-width: 240px;
+  justify-self: end;
 }
 
 .hero-card:hover {
@@ -657,6 +660,37 @@ button:disabled,
   color: rgba(248, 250, 252, 0.88);
 }
 
+.hero-card__when,
+.hero-card__price {
+  color: rgba(248, 250, 252, 0.96);
+  font-size: 0.76rem;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.poster-card--hero .poster-card__top {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "when star"
+    "price star";
+  align-items: start;
+}
+
+.hero-card__when {
+  grid-area: when;
+  white-space: nowrap;
+}
+
+.hero-card__price {
+  grid-area: price;
+  justify-self: start;
+}
+
+.poster-card--hero .save-star--hero {
+  grid-area: star;
+  align-self: start;
+}
+
 .hero-card__tags {
   display: flex;
   gap: 8px;
@@ -669,6 +703,12 @@ button:disabled,
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.75rem;
+}
+
+.poster-card--hero .hero-card__tags span {
+  background: rgba(248, 250, 252, 0.14);
+  border: 1px solid rgba(248, 250, 252, 0.32);
+  color: #f8fafc;
 }
 
 .section-header {
@@ -1324,8 +1364,8 @@ body:not(.is-admin) [data-admin-controls] {
   inset: 0;
   z-index: 2;
   display: flex;
-  align-items: flex-end;
-  background: linear-gradient(180deg, rgba(7, 10, 24, 0.08) 14%, rgba(7, 10, 24, 0.86) 90%);
+  align-items: stretch;
+  background: rgba(7, 10, 24, 0.72);
   color: #f8fafc;
   opacity: 0;
   visibility: hidden;
@@ -1335,9 +1375,21 @@ body:not(.is-admin) [data-admin-controls] {
 
 .poster-card__content {
   width: 100%;
+  height: 100%;
   padding: 12px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+  background: transparent;
+  border-radius: 0;
+}
+
+.poster-card__top {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: auto;
 }
 
 .poster-card__title {
@@ -1349,6 +1401,10 @@ body:not(.is-admin) [data-admin-controls] {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.poster-card--catalog .poster-card__title {
+  margin-top: auto;
 }
 
 .poster-card__meta {
@@ -1366,6 +1422,21 @@ body:not(.is-admin) [data-admin-controls] {
   font-size: 0.8rem;
   align-self: flex-start;
   pointer-events: auto;
+}
+
+.save-star--hero {
+  width: 30px;
+  height: 30px;
+  color: #f8fafc;
+  border-color: rgba(248, 250, 252, 0.38);
+  background: rgba(248, 250, 252, 0.08);
+}
+
+.save-star--hero:hover,
+.save-star--hero:focus-visible {
+  color: #ffffff;
+  border-color: rgba(248, 250, 252, 0.62);
+  background: rgba(248, 250, 252, 0.2);
 }
 
 .poster-card__content .event-card__link,
@@ -1513,6 +1584,20 @@ body:not(.is-admin) [data-admin-controls] {
   background: var(--accent-warm);
   color: #111;
   border-color: var(--accent-warm);
+}
+
+.poster-card--catalog .event-card__price--free,
+.poster-card--catalog .event-card__price--paid {
+  background: rgba(248, 250, 252, 0.14);
+  border: 1px solid rgba(248, 250, 252, 0.32);
+  color: #f8fafc;
+}
+
+.poster-card--catalog .event-card__tag,
+.poster-card--catalog .event-card__tag:nth-child(even) {
+  background: rgba(248, 250, 252, 0.14);
+  border-color: rgba(248, 250, 252, 0.32);
+  color: #f8fafc;
 }
 
 .event-card__tag--pending {
@@ -1831,6 +1916,11 @@ body:not(.is-admin) [data-admin-controls] {
 }
 
 @media (max-width: 767px) {
+  .hero-card {
+    max-width: min(58vw, 220px);
+    justify-self: end;
+  }
+
   .poster-card__overlay {
     display: none;
   }
@@ -1849,6 +1939,12 @@ body:not(.is-admin) [data-admin-controls] {
     scroll-snap-align: start;
   }
 
+}
+
+@media (min-width: 1280px) {
+  .hero-card {
+    max-width: 260px;
+  }
 }
 
 @media (min-width: 768px) {
@@ -3497,7 +3593,19 @@ body[data-admin-auth="denied"] [data-admin-protected] {
   }
 }
 
+@media (min-width: 640px) {
+  .hero .container {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+}
+
 @media (min-width: 768px) {
+  .hero .container {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
   .menu-toggle {
     display: none;
   }
@@ -3603,7 +3711,7 @@ body[data-admin-auth="denied"] [data-admin-protected] {
 
   .hero .container {
     grid-template-columns: 1.2fr 0.8fr;
-    align-items: center;
+    align-items: start;
   }
 
   .hero {
