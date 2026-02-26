@@ -236,7 +236,29 @@ test('admin sets event as recommended and it appears on homepage', async ({ page
     'href',
     /event-card\.html\?id=evt-rec-1/
   );
-  await expect(recommendedCard.locator('.highlights__image')).toBeVisible();
+  const imageFrame = recommendedCard.locator('.event-image-frame--recommended').first();
+  await expect(imageFrame).toBeVisible();
+  await expect(recommendedCard.locator('.event-image-frame__bg')).toBeVisible();
+  await expect(recommendedCard.locator('.event-image-frame__img')).toBeVisible();
+  const frameStyles = await imageFrame.evaluate((element) => {
+    const frame = window.getComputedStyle(element as HTMLElement);
+    const bg = window.getComputedStyle(
+      (element as HTMLElement).querySelector('.event-image-frame__bg') as HTMLElement
+    );
+    const img = window.getComputedStyle(
+      (element as HTMLElement).querySelector('.event-image-frame__img') as HTMLElement
+    );
+    return {
+      frameOverflow: frame.overflow,
+      frameRadius: frame.borderTopLeftRadius,
+      bgPosition: bg.position,
+      imgObjectFit: img.objectFit
+    };
+  });
+  expect(frameStyles.frameOverflow).toBe('hidden');
+  expect(parseFloat(frameStyles.frameRadius)).toBeGreaterThan(0);
+  expect(frameStyles.bgPosition).toBe('absolute');
+  expect(frameStyles.imgObjectFit).toBe('contain');
   await expect(recommendedCard.locator('.event-card__cta', { hasText: /Квитки|Реєстрація|Детальніше/ })).toBeVisible();
 });
 

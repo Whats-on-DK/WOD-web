@@ -63,6 +63,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
   const queryParams = new URLSearchParams(window.location.search);
   const forceServerless = queryParams.get('serverless') === '1';
   const highlightsMode = queryParams.get('highlights') === 'weekly' ? 'weekly' : 'recommended';
+  const useRecommendedMock = queryParams.get('recommendedMock') === '1';
   const hasServerlessSupport = forceServerless || !LOCAL_HOSTNAMES.has(window.location.hostname);
   const isLocalHost = !forceServerless && LOCAL_HOSTNAMES.has(window.location.hostname);
   const hasLocalAdminSession = () => {
@@ -1498,6 +1499,61 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       getLocalizedCity: (value) => getLocalizedCity(value)
     };
 
+    const recommendedMockEvents = [
+      {
+        id: 'mock-rec-1',
+        title: 'Mock Recommended: Portrait Poster',
+        start: '2031-01-05T18:00:00+01:00',
+        city: 'Copenhagen',
+        format: 'offline',
+        address: 'Copenhagen',
+        venue: 'Mock Hall',
+        priceType: 'paid',
+        registrationUrl: 'https://example.com/tickets/mock-1',
+        position: 1,
+        imageUrl: './static/IMG_5069%202.JPG'
+      },
+      {
+        id: 'mock-rec-2',
+        title: 'Mock Recommended: Landscape Poster',
+        start: '2031-01-08T19:30:00+01:00',
+        city: 'Aarhus',
+        format: 'offline',
+        address: 'Aarhus',
+        venue: 'Mock Stage',
+        priceType: 'free',
+        registrationUrl: 'https://example.com/register/mock-2',
+        position: 2,
+        imageUrl: './static/IMG_5070%202.jpg'
+      },
+      {
+        id: 'mock-rec-3',
+        title: 'Mock Recommended: Square Poster',
+        start: '2031-01-12T17:00:00+01:00',
+        city: 'Odense',
+        format: 'offline',
+        address: 'Odense',
+        venue: 'Mock Center',
+        priceType: 'free',
+        registrationUrl: '',
+        position: 3,
+        imageUrl: './static/IMG_5359%202.jpg'
+      },
+      {
+        id: 'mock-rec-4',
+        title: 'Mock Recommended: Fallback Placeholder',
+        start: '2031-01-20T18:30:00+01:00',
+        city: 'Online',
+        format: 'online',
+        address: 'Zoom',
+        venue: '',
+        priceType: 'free',
+        registrationUrl: '',
+        position: 4,
+        imageUrl: ''
+      }
+    ];
+
     const getRecommendedCta = (event) => {
       const detailUrl = `event-card.html?id=${encodeURIComponent(event.id)}`;
       const ticketUrl = String(event.registrationUrl || event.ticketUrl || '').trim();
@@ -1561,8 +1617,18 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
             event.image_url ||
             '';
           const imageMarkup = image
-            ? `<img class="highlights__image" src="${image}" alt="${title}" loading="lazy" width="360" height="220" />`
-            : '<div class="highlights__image highlights__image--placeholder"></div>';
+            ? `
+              <div class="event-image-frame event-image-frame--recommended">
+                <div class="event-image-frame__bg" style="background-image:url('${image}')"></div>
+                <div class="event-image-frame__bg-overlay" aria-hidden="true"></div>
+                <img class="event-image-frame__img" src="${image}" alt="${title}" loading="lazy" width="360" height="220" />
+              </div>
+            `
+            : `
+              <div class="event-image-frame event-image-frame--recommended event-image-frame--placeholder">
+                <div class="event-image-frame__placeholder" aria-hidden="true"></div>
+              </div>
+            `;
 
           return `
             <article class="highlights__card highlights__card--recommended" data-recommended-id="${event.id}">
@@ -2936,6 +3002,10 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       if (!highlightsTrack) return;
       if (highlightsMode === 'weekly') {
         renderHighlights(state.events);
+        return;
+      }
+      if (useRecommendedMock) {
+        renderRecommended(recommendedMockEvents);
         return;
       }
       try {
