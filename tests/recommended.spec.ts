@@ -330,18 +330,15 @@ test('recommended CTA labels follow paid/registration/details logic', async ({ p
   await expect(card3.locator('.recommended-card__cta')).toHaveText(/Реєстрація/i);
 });
 
-test('recommended reorder with up/down persists after refresh', async ({ page }) => {
+test('recommended manual reorder controls are disabled in admin UI', async ({ page }) => {
   await enableAdminSession(page);
   await configureRecommendedApi(page, { initialOrder: ['evt-rec-1', 'evt-rec-2'] });
 
   await page.goto('/event-card.html?id=evt-rec-2&serverless=1');
-  await page.locator('[data-action="recommended-manage"]').click();
-  await page.locator('[data-slot-event-id="evt-rec-2"] [data-action="recommended-up"]').click();
-
-  await expect(page.locator('[data-slot-event-id]').first()).toHaveAttribute('data-slot-event-id', 'evt-rec-2');
-  await page.reload();
-  await page.locator('[data-action="recommended-manage"]').click();
-  await expect(page.locator('[data-slot-event-id]').first()).toHaveAttribute('data-slot-event-id', 'evt-rec-2');
+  await expect(page.locator('[data-action="recommended-manage"]')).toBeHidden();
+  await expect(page.locator('[data-recommended-slots]')).toBeHidden();
+  await expect(page.locator('[data-action="recommended-up"]')).toHaveCount(0);
+  await expect(page.locator('[data-action="recommended-down"]')).toHaveCount(0);
 });
 
 test('adding seventh recommended item is blocked with a clear message', async ({ page }) => {

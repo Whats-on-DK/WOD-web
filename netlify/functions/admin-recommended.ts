@@ -143,31 +143,10 @@ export const handler = async (event: HandlerEvent, context: HandlerContext) => {
     }
 
     if (action === 'reorder') {
-      const order = Array.isArray(payload.order) ? payload.order.map((value) => String(value || '')) : [];
-      const result = (await supabaseFetch('rpc/recommended_manage', {
-        method: 'POST',
-        body: {
-          p_action: 'reorder',
-          p_event_ref: null,
-          p_duration_code: null,
-          p_slot_position: null,
-          p_order_refs: order,
-          p_actor: actor,
-          p_actor_role: actorRole
-        }
-      })) as any;
-      if (!result?.ok) {
-        return {
-          statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ok: false, error: result?.error || 'reorder_failed' })
-        };
-      }
-      const slots = await mapState();
       return {
-        statusCode: 200,
+        statusCode: 400,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ok: true, slots })
+        body: JSON.stringify({ ok: false, error: 'reorder_disabled' })
       };
     }
 

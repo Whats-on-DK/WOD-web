@@ -3211,6 +3211,15 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
   const recommendedSaveButton = document.querySelector('[data-action="recommended-save"]');
   const recommendedRemoveButton = document.querySelector('[data-action="recommended-remove"]');
   const recommendedManageButton = document.querySelector('[data-action="recommended-manage"]');
+  const disableRecommendedReorderUi = () => {
+    if (recommendedManageButton instanceof HTMLButtonElement) {
+      recommendedManageButton.hidden = true;
+      recommendedManageButton.disabled = true;
+    }
+    if (recommendedSlotsContainer instanceof HTMLElement) {
+      recommendedSlotsContainer.hidden = true;
+    }
+  };
   const setAdminArchiveState = (archived) => {
     if (adminArchivedBadge) adminArchivedBadge.hidden = !archived;
     if (adminArchiveButton) adminArchiveButton.hidden = archived;
@@ -3781,15 +3790,9 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         const eventId = String(slot?.event?.id || '');
         const title = String(slot?.event?.title || 'Untitled event');
         const position = Number(slot?.slotPosition || index + 1);
-        const upDisabled = index === 0 ? 'disabled' : '';
-        const downDisabled = index === slots.length - 1 ? 'disabled' : '';
         return `
           <div class="event-admin__slot-row" data-slot-event-id="${eventId}">
             <span>${position}. ${title}</span>
-            <div class="event-admin__slot-actions">
-              <button class="btn ghost" type="button" data-action="recommended-up" ${upDisabled}>Up</button>
-              <button class="btn ghost" type="button" data-action="recommended-down" ${downDisabled}>Down</button>
-            </div>
           </div>
         `;
       })
@@ -3845,26 +3848,8 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
     }
   };
 
-  const saveRecommendedOrder = async (order) => {
-    const headers = await getRecommendedAuthHeaders();
-    const response = await fetch('/.netlify/functions/admin-recommended', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ action: 'reorder', order })
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || payload?.ok === false) {
-      if (payload?.error === 'migration_required') {
-        throw new Error('migration_required');
-      }
-      throw new Error(String(payload?.error || 'reorder_failed'));
-    }
-    recommendedSlotsState = Array.isArray(payload.slots) ? payload.slots : [];
-    renderRecommendedSlots();
-    syncRecommendedEventState();
-  };
-
   if (document.body.classList.contains('event-page')) {
+    disableRecommendedReorderUi();
     if (calendarToggle && calendarMenu) {
       calendarToggle.addEventListener('click', () => {
         const expanded = calendarToggle.getAttribute('aria-expanded') === 'true';
@@ -4083,44 +4068,6 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           if (!ok) return;
           window.location.href = './admin-page.html#archive';
         });
-      });
-    }
-    if (recommendedManageButton instanceof HTMLButtonElement) {
-      recommendedManageButton.addEventListener('click', () => {
-        if (!(recommendedSlotsContainer instanceof HTMLElement)) return;
-        recommendedSlotsContainer.hidden = !recommendedSlotsContainer.hidden;
-      });
-    }
-    if (recommendedSlotsList instanceof HTMLElement) {
-      recommendedSlotsList.addEventListener('click', async (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) return;
-        const row = target.closest('[data-slot-event-id]');
-        if (!row) return;
-        const eventId = String(row.getAttribute('data-slot-event-id') || '');
-        const current = [...recommendedSlotsState];
-        const index = current.findIndex((slot) => String(slot?.event?.id || '') === eventId);
-        if (index < 0) return;
-        if (target.dataset.action === 'recommended-up' && index > 0) {
-          [current[index - 1], current[index]] = [current[index], current[index - 1]];
-        } else if (target.dataset.action === 'recommended-down' && index < current.length - 1) {
-          [current[index], current[index + 1]] = [current[index + 1], current[index]];
-        } else {
-          return;
-        }
-        try {
-          await saveRecommendedOrder(current.map((slot) => String(slot?.event?.id || '')));
-          setRecommendedStatus('Slots order saved.');
-        } catch (error) {
-          if (error instanceof Error && error.message === 'migration_required') {
-            setRecommendedStatus(
-              'Recommended is not initialized in DB. Run supabase.recommended.sql migration.',
-              true
-            );
-            return;
-          }
-          setRecommendedStatus('Failed to save slots order.', true);
-        }
       });
     }
     if (recommendedSaveButton instanceof HTMLButtonElement) {

@@ -20,7 +20,12 @@ export const getIdentityToken = async () => {
     try {
       return await user.jwt();
     } catch (error) {
-      return null;
+      try {
+        // Retry once with forced refresh; Netlify Identity can fail transiently.
+        return await user.jwt(true);
+      } catch (refreshError) {
+        return user?.token?.access_token || null;
+      }
     }
   }
   return user?.token?.access_token || null;
