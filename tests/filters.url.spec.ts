@@ -50,3 +50,62 @@ test('quick date presets toggle off clears URL and date inputs', async ({ page }
   await expect(dateFrom).toHaveValue('');
   await expect(dateTo).toHaveValue('');
 });
+
+test('deep-link tags applies on initial load and keeps tags in URL', async ({ page }) => {
+  await page.goto('/?tags=community');
+  await waitForEventsRendered(page);
+
+  const advancedToggle = page.locator('[data-action="filters-advanced"]');
+  const advancedPanel = page.locator('#filters-advanced');
+  if ((await advancedPanel.isVisible()) === false) {
+    await advancedToggle.click();
+  }
+
+  const communityTagInput = page.locator('[data-filters-tags-list] input[name="tags"][value="community"]').first();
+  await expect(communityTagInput).toBeVisible();
+  await expect(communityTagInput).toBeChecked();
+  await expect(page).toHaveURL(/tags=community/);
+
+  const selectedTagLabel = await communityTagInput.locator('xpath=ancestor::label[1]/span').innerText();
+  const cards = page.getByTestId('event-card');
+  await expect(cards.first()).toBeVisible();
+  const count = await cards.count();
+  expect(count).toBeGreaterThan(0);
+  for (let index = 0; index < count; index += 1) {
+    await expect(cards.nth(index).locator('.event-card__tag', { hasText: selectedTagLabel }).first()).toBeVisible();
+  }
+});
+
+test('deep-link dates and tags apply together on initial load', async ({ page }) => {
+  await page.goto('/?from=2031-01-01&to=2031-01-31&tags=community');
+  await waitForEventsRendered(page);
+
+  await expect(page.locator('input[name="date-from"]')).toHaveValue('2031-01-01');
+  await expect(page.locator('input[name="date-to"]')).toHaveValue('2031-01-31');
+  await expect(page).toHaveURL(/from=2031-01-01/);
+  await expect(page).toHaveURL(/to=2031-01-31/);
+  await expect(page).toHaveURL(/tags=community/);
+
+  const advancedToggle = page.locator('[data-action="filters-advanced"]');
+  const advancedPanel = page.locator('#filters-advanced');
+  if ((await advancedPanel.isVisible()) === false) {
+    await advancedToggle.click();
+  }
+  const communityTagInput = page.locator('[data-filters-tags-list] input[name="tags"][value="community"]').first();
+  await expect(communityTagInput).toBeChecked();
+  const selectedTagLabel = await communityTagInput.locator('xpath=ancestor::label[1]/span').innerText();
+  const cards = page.getByTestId('event-card');
+  await expect(cards.first()).toBeVisible();
+  const count = await cards.count();
+  expect(count).toBeGreaterThan(0);
+  for (let index = 0; index < count; index += 1) {
+    await expect(cards.nth(index).locator('.event-card__tag', { hasText: selectedTagLabel }).first()).toBeVisible();
+  }
+});
+
+test('unknown deep-link tag does not crash and keeps URL param', async ({ page }) => {
+  await page.goto('/?tags=nonexistenttag');
+  await expect(page.locator('.catalog-empty')).toBeVisible();
+  await expect(page.getByTestId('event-card')).toHaveCount(0);
+  await expect(page).toHaveURL(/tags=nonexistenttag/);
+});

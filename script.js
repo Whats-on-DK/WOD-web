@@ -8,6 +8,7 @@ import {
   defaultNormalizeCity,
   filterWeeklyEvents
 } from './modules/filters.mjs';
+import { resolveTagsForFiltering, resolveTagsForUrl } from './modules/tags-deeplink.mjs';
 import { EventCard } from './components/event-card.js';
 import { HighlightCard } from './components/highlight-card.js';
 import { ADMIN_SESSION_KEY, getIdentityToken, hasAdminRole } from './modules/auth.js';
@@ -1926,10 +1927,21 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
 
     let selectedTagOrder = [];
 
+    const getTagInputList = () =>
+      tagsFilterList ? Array.from(tagsFilterList.querySelectorAll('input[name="tags"]')) : [];
+
+    const areTagInputsReady = () => {
+      if (!tagsFilterList) return true;
+      return getTagInputList().length > 0;
+    };
+
     const syncSelectedTags = () => {
       if (!filtersForm) {
         activeFilters.tags.clear();
         selectedTagOrder = [];
+        return;
+      }
+      if (tagsFilterList && !areTagInputsReady()) {
         return;
       }
       const formData = new FormData(filtersForm);
@@ -2030,6 +2042,11 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       const filters = buildFilters(formData, activeFilters.searchQuery, {
         normalize,
         normalizeCity
+      });
+      filters.tags = resolveTagsForFiltering({
+        formTags: filters.tags,
+        activeTags: Array.from(activeFilters.tags || []),
+        normalize
       });
       currentFilters = filters;
       const savedIds = getSavedEventIds();
@@ -2408,7 +2425,25 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
     };
 
     const updateCatalogQueryParams = () => {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams(window.location.search);
+      [
+        'q',
+        'from',
+        'to',
+        'city',
+        'price',
+        'format',
+        'tags',
+        'today',
+        'tomorrow',
+        'weekend',
+        'online',
+        'favorites',
+        'past',
+        'page'
+      ].forEach((key) => {
+        params.delete(key);
+      });
       const searchValue = getSearchValue();
       if (searchValue) {
         params.set('q', searchValue);
@@ -2428,7 +2463,13 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
             params.set(key, String(value));
           }
         });
-        const selectedTags = formData.getAll('tags').map((value) => normalize(value)).filter(Boolean);
+        const formTags = formData.getAll('tags').map((value) => normalize(value)).filter(Boolean);
+        const selectedTags = resolveTagsForUrl({
+          formTags,
+          activeTags: Array.from(activeFilters.tags || []),
+          tagsInputsReady: areTagInputsReady(),
+          normalize
+        });
         if (selectedTags.length) {
           params.set('tags', selectedTags.join(','));
         }
