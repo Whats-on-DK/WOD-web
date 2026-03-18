@@ -5,7 +5,27 @@ type HandlerEvent = {
   headers?: Record<string, string>;
 };
 
-const DEFAULT_IMAGE = 'https://whatsondk.netlify.app/static/og-placeholder-white.png';
+const DEFAULT_IMAGE_PATH = '/static/og-placeholder-white.png';
+
+const normalizeOrigin = (value: string) => {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return '';
+  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    return new URL(withScheme).origin;
+  } catch {
+    return '';
+  }
+};
+
+const getConfiguredOrigin = () =>
+  normalizeOrigin(
+    process.env.URL ||
+      process.env.DEPLOY_PRIME_URL ||
+      process.env.DEPLOY_URL ||
+      process.env.SITE_URL ||
+      ''
+  );
 
 const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -20,7 +40,7 @@ const escapeHtml = (value: string) =>
 const buildOrigin = (event: HandlerEvent) => {
   const proto = event.headers?.['x-forwarded-proto'] || 'https';
   const host = event.headers?.host || process.env.URL?.replace(/^https?:\/\//, '');
-  if (!host) return 'https://whatsondk.netlify.app';
+  if (!host) return getConfiguredOrigin() || 'http://localhost:8888';
   return `${proto}://${host}`;
 };
 
@@ -92,7 +112,7 @@ const fetchPublishedEvent = async (id: string) => {
 
 const toAbsoluteImageUrl = (image: string, origin: string) => {
   const value = String(image || '').trim();
-  if (!value || value.startsWith('data:')) return DEFAULT_IMAGE;
+  if (!value || value.startsWith('data:')) return `${origin}${DEFAULT_IMAGE_PATH}`;
   if (/^https?:\/\//i.test(value)) return value;
   if (value.startsWith('/')) return `${origin}${value}`;
   return `${origin}/${value.replace(/^\.?\//, '')}`;
@@ -129,7 +149,7 @@ export const handler = async (event: HandlerEvent) => {
     const description =
       String(row?.description || fallbackDescription || '').trim() || 'Деталі події в Данії.';
     const image = toAbsoluteImageUrl(
-      String(row?.images?.[0] || row?.image_url || fallbackImage || '').trim() || DEFAULT_IMAGE,
+      String(row?.images?.[0] || row?.image_url || fallbackImage || '').trim() || DEFAULT_IMAGE_PATH,
       origin
     );
 
@@ -180,12 +200,12 @@ export const handler = async (event: HandlerEvent) => {
     <meta property="og:title" content="Подія — What's on DK?" />
     <meta property="og:description" content="Деталі події в Данії." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="${escapeHtml(DEFAULT_IMAGE)}" />
+    <meta property="og:image" content="${escapeHtml(`${origin}${DEFAULT_IMAGE_PATH}`)}" />
     <meta property="og:url" content="${escapeHtml(eventUrl)}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Подія — What's on DK?" />
     <meta name="twitter:description" content="Деталі події в Данії." />
-    <meta name="twitter:image" content="${escapeHtml(DEFAULT_IMAGE)}" />
+    <meta name="twitter:image" content="${escapeHtml(`${origin}${DEFAULT_IMAGE_PATH}`)}" />
     <link rel="canonical" href="${escapeHtml(shareUrl)}" />
   </head>
   <body></body>

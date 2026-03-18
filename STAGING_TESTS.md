@@ -4,7 +4,7 @@
 
 ## Підготовка (один раз на сесію)
 ```bash
-export STAGING_BASE_URL="https://feature-your-change--whats-on-dk.netlify.app"
+export STAGING_BASE_URL="https://<preview-or-staging-site>.netlify.app"
 ```
 
 Для адмін-циклу (створення/редагування/архів/restore/delete) також потрібен:

@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildGoogleCalendarUrl, buildIcs } from '../../modules/calendar.mjs';
 
+const ORIGIN = 'https://wod.example.test';
+
 test('buildGoogleCalendarUrl includes base url, ctz and event link in details', () => {
   const event = {
     id: 'evt-100',
@@ -13,7 +15,7 @@ test('buildGoogleCalendarUrl includes base url, ctz and event link in details', 
     city: 'Copenhagen',
     ticketUrl: 'https://tickets.example.com'
   };
-  const eventUrl = 'https://whatsondk.netlify.app/event-card.html?id=evt-100';
+  const eventUrl = `${ORIGIN}/event-card.html?id=evt-100`;
   const url = new URL(buildGoogleCalendarUrl(event, { eventUrl }));
 
   assert.equal(url.origin, 'https://calendar.google.com');
@@ -22,7 +24,7 @@ test('buildGoogleCalendarUrl includes base url, ctz and event link in details', 
   assert.ok(url.searchParams.get('dates')?.includes('/'));
   assert.equal(url.searchParams.get('text'), event.title);
   assert.match(url.searchParams.get('details') || '', /Event URL:/);
-  assert.match(url.searchParams.get('details') || '', /whatsondk\.netlify\.app/);
+  assert.match(url.searchParams.get('details') || '', /wod\.example\.test/);
 });
 
 test('buildIcs outputs valid calendar event with DTSTART/DTEND/SUMMARY', () => {
@@ -34,7 +36,7 @@ test('buildIcs outputs valid calendar event with DTSTART/DTEND/SUMMARY', () => {
     city: 'Copenhagen',
     ticketUrl: 'https://meet.example.com'
   };
-  const ics = buildIcs(event, { eventUrl: 'https://whatsondk.netlify.app/event-card.html?id=evt-200' });
+  const ics = buildIcs(event, { eventUrl: `${ORIGIN}/event-card.html?id=evt-200` });
 
   assert.match(ics, /BEGIN:VCALENDAR/);
   assert.match(ics, /BEGIN:VEVENT/);
