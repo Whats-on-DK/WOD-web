@@ -2063,10 +2063,8 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         syncSavedStarButton(heroSaveButton);
       }
       if (heroStatus) {
-        heroStatus.hidden = !isLive;
-        if (isLive) {
-          heroStatus.textContent = formatMessage('live_label', {});
-        }
+        // Avoid duplicated live state labels in the hero header.
+        heroStatus.hidden = true;
       }
       if (heroKicker) {
         if (isLive) {

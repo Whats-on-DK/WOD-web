@@ -2042,14 +2042,15 @@ body:not(.is-admin) [data-admin-controls] {
 
 @media (max-width: 767px) {
   .hero-brand-mark {
-    width: 0.482em;
-    height: 0.759em;
+    width: 0.53em;
+    height: 0.835em;
     transform: translateY(0.01em);
   }
 
   .hero-card {
     max-width: min(75vw, 265px);
-    justify-self: end;
+    justify-self: center;
+    margin-inline: auto;
   }
 
   .poster-card__overlay {
