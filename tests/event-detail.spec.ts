@@ -7,7 +7,7 @@ test('event detail shows real data and edit link', async ({ page }) => {
     ok: true,
     event: {
       id: eventId,
-      title: 'Design Systems Meetup',
+      title: 'Громадська зустріч у Копенгагені',
       description: 'Real event description for detail page.',
       tags: [
         { label: 'Design', status: 'approved' },

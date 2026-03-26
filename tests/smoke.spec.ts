@@ -10,7 +10,7 @@ for (const r of routes) {
     await freezeTime(page);
     const errs = watchConsole(page);
     await page.goto(r);
-    await expect(page).toHaveTitle(/What's on DK\?|Події|Begivenheder|Design Systems Meetup/i);
+    await expect(page).toHaveTitle(/What.?s on DK|Події|Begivenheder/i);
     const relevantErrors = errs.filter(
       (entry) => !entry.includes('Failed to load resource: the server responded with a status of 404')
     );

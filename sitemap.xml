@@ -1,36 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://example.com/</loc>
+    <loc>https://whats-on-dk.netlify.app/</loc>
   </url>
   <url>
-    <loc>https://example.com/events</loc>
+    <loc>https://whats-on-dk.netlify.app/about.html</loc>
   </url>
   <url>
-    <loc>https://example.com/about</loc>
+    <loc>https://whats-on-dk.netlify.app/docs.html</loc>
   </url>
   <url>
-    <loc>https://example.com/contacts</loc>
+    <loc>https://whats-on-dk.netlify.app/legal-privacy.html</loc>
   </url>
   <url>
-    <loc>https://example.com/legal-privacy.html</loc>
+    <loc>https://whats-on-dk.netlify.app/legal-terms.html</loc>
   </url>
   <url>
-    <loc>https://example.com/legal-terms.html</loc>
-  </url>
-  <url>
-    <loc>https://example.com/events/design-systems-meetup</loc>
-  </url>
-  <url>
-    <loc>https://example.com/events/local-food-fest</loc>
-  </url>
-  <url>
-    <loc>https://example.com/events/city-night-run</loc>
-  </url>
-  <url>
-    <loc>https://example.com/events/creative-coding-jam</loc>
-  </url>
-  <url>
-    <loc>https://example.com/events/family-film-night</loc>
+    <loc>https://whats-on-dk.netlify.app/event-card.html</loc>
   </url>
 </urlset>

@@ -15,15 +15,21 @@
 
 ## Deployment (Netlify)
 
-- Set the GitHub secrets `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` in the repository settings.
+- Set the GitHub secrets `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` in the currently active repository.
+- Keep deploy branch as `main` unless workflow settings are intentionally changed.
+- If Netlify Git auto-deploy is also enabled for the same site, disable one deploy path to avoid duplicate production deploys.
 
 ## Preview deploys (Netlify)
 
 - Create a feature branch: `git checkout -b feature/your-change`
 - Commit and push changes: `git push -u origin feature/your-change`
-- Open a PR into `main` → Netlify creates a Preview Deploy automatically.
+- Open a PR into `main` → Netlify creates a Preview Deploy automatically (when the Netlify site is linked to this repo).
 - Test the Preview URL from the PR or Netlify Deploys.
 - Merge the PR when ready → Netlify auto-deploys to production.
+
+## Repo migration
+
+- For migration from one GitHub repo/account to another, follow [MIGRATION_CHECKLIST.md](./MIGRATION_CHECKLIST.md).
 
 ## Admin access (Netlify Identity)
 

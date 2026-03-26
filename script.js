@@ -2063,10 +2063,8 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         syncSavedStarButton(heroSaveButton);
       }
       if (heroStatus) {
-        heroStatus.hidden = !isLive;
-        if (isLive) {
-          heroStatus.textContent = formatMessage('live_label', {});
-        }
+        // Avoid duplicated live state labels in the hero header.
+        heroStatus.hidden = true;
       }
       if (heroKicker) {
         if (isLive) {
@@ -3708,7 +3706,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
   const updateEventSocialMeta = (eventData) => {
     if (!eventData?.id) return;
     const eventUrl = buildEventPageUrl(eventData);
-    const title = `${String(eventData.title || '').trim() || 'Подія'} — What's on DK?`;
+    const title = `${String(eventData.title || '').trim() || 'Подія'} — What’s on DK`;
     const city = getDisplayCity(eventData.city);
     const dateLabel = formatDateRange(eventData.start, eventData.end);
     const description = [dateLabel, city].filter(Boolean).join(' · ') || 'Деталі події в Данії.';
@@ -4621,7 +4619,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           partnerCtaEl.hidden = true;
         }
       }
-      document.title = `${partner?.name || 'Партнер'} — What's on DK?`;
+      document.title = `${partner?.name || 'Партнер'} — What’s on DK`;
     };
 
     const loadPartner = async () => {

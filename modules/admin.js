@@ -15,6 +15,7 @@ import {
   sortPartners,
   upsertLocalPartner
 } from './partners.mjs';
+import { fileToOptimizedDataUrl } from './image-optimizer.mjs';
 
 export const initAdmin = ({ formatMessage }) => {
   const moderationList = document.querySelector('.moderation-list');
@@ -72,12 +73,13 @@ export const initAdmin = ({ formatMessage }) => {
     };
 
     const fileToDataUrl = (file) =>
-      new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ''));
-        reader.onerror = () => reject(new Error('file_read_error'));
-        reader.readAsDataURL(file);
-      });
+      fileToOptimizedDataUrl(file, {
+        maxDimension: 1200,
+        targetBytes: 180 * 1024,
+        initialQuality: 0.86,
+        minQuality: 0.62,
+        preferredMimeType: 'image/webp'
+      }).then((result) => result.dataUrl);
 
     const parseFaqRows = (value) =>
       String(value || '')
@@ -1373,12 +1375,13 @@ export const initAdmin = ({ formatMessage }) => {
     };
 
     const fileToDataUrl = (file) =>
-      new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ''));
-        reader.onerror = () => reject(new Error('file_read_error'));
-        reader.readAsDataURL(file);
-      });
+      fileToOptimizedDataUrl(file, {
+        maxDimension: 1200,
+        targetBytes: 180 * 1024,
+        initialQuality: 0.86,
+        minQuality: 0.62,
+        preferredMimeType: 'image/webp'
+      }).then((result) => result.dataUrl);
 
     const parseFaqRows = (value) =>
       String(value || '')

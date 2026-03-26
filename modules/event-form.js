@@ -2,6 +2,7 @@ import { ADMIN_SESSION_KEY, getIdentityToken, hasAdminRole } from './auth.js';
 import { isArchivedEvent } from './event-status.mjs';
 import { normalizeEventLanguage } from './language.mjs';
 import { resolveAdminSession } from './admin-session.mjs';
+import { fileToOptimizedDataUrl } from './image-optimizer.mjs';
 import {
   buildLocalEventId,
   fetchMergedLocalEvents,
@@ -50,6 +51,8 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
   const submitStatus = multiStepForm.querySelector('[data-submit-status]');
   const organizerId = multiStepForm.dataset.organizerId || 'org-001';
   let previewImageUrl = null;
+  let imageOptimizationInFlight = false;
+  let imageSelectionVersion = 0;
   let identityUser = null;
   let editingEventId = null;
   let editingEventData = null;
@@ -428,23 +431,52 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
   };
 
   const updatePreviewImage = () => {
-    if (!previewImage) return;
+    const file = imageInput?.files?.[0];
+    const altText = imageAltInput?.value?.trim() || '';
+    if (!file && !previewImageUrl) {
+      applyPreviewImage('', '');
+      return;
+    }
+    applyPreviewImage(previewImageUrl, altText);
+  };
+
+  const optimizeSelectedImage = async () => {
     const file = imageInput?.files?.[0];
     const altText = imageAltInput?.value?.trim() || '';
     if (!file) {
-      if (!previewImageUrl) {
-        applyPreviewImage('', '');
-      } else {
-        applyPreviewImage(previewImageUrl, altText);
-      }
+      imageOptimizationInFlight = false;
+      updatePreviewImage();
       return;
     }
-    const reader = new FileReader();
-    reader.addEventListener('load', () => {
-      if (typeof reader.result !== 'string') return;
-      applyPreviewImage(reader.result, altText);
-    });
-    reader.readAsDataURL(file);
+    const version = ++imageSelectionVersion;
+    imageOptimizationInFlight = true;
+    if (submitStatus) {
+      submitStatus.textContent = 'Оптимізуємо зображення...';
+    }
+    try {
+      const optimized = await fileToOptimizedDataUrl(file, {
+        maxDimension: 1600,
+        targetBytes: 320 * 1024,
+        initialQuality: 0.84,
+        minQuality: 0.58,
+        preferredMimeType: 'image/webp'
+      });
+      if (version !== imageSelectionVersion) return;
+      previewImageUrl = optimized.dataUrl || previewImageUrl;
+      applyPreviewImage(previewImageUrl, altText);
+      if (imageInput) {
+        imageInput.required = false;
+      }
+    } catch (error) {
+      if (version !== imageSelectionVersion) return;
+      updatePreviewImage();
+    } finally {
+      if (version !== imageSelectionVersion) return;
+      imageOptimizationInFlight = false;
+      if (submitStatus?.textContent === 'Оптимізуємо зображення...') {
+        submitStatus.textContent = '';
+      }
+    }
   };
 
   const updatePreview = () => {
@@ -581,7 +613,7 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
 
   if (imageInput) {
     imageInput.addEventListener('change', () => {
-      updatePreview();
+      optimizeSelectedImage();
     });
   }
 
@@ -720,6 +752,12 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
       return;
     }
     event.preventDefault();
+    if (imageOptimizationInFlight) {
+      if (submitStatus) {
+        submitStatus.textContent = 'Зачекайте, зображення ще обробляється.';
+      }
+      return;
+    }
     if (honeypotField && honeypotField.value.trim()) {
       if (submitStatus) {
         submitStatus.textContent = formatMessage('spam_blocked', {});

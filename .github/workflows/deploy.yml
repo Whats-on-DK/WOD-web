@@ -6,6 +6,13 @@ on:
 
 jobs:
   deploy:
+    # Required repository secrets in whichever GitHub repo is active:
+    # - NETLIFY_AUTH_TOKEN
+    # - NETLIFY_SITE_ID
+    #
+    # Migration note:
+    # If Netlify Git auto-deploy is also enabled for the same site/branch,
+    # pushes to main can trigger duplicate production deploys.
     if: ${{ secrets.NETLIFY_AUTH_TOKEN && secrets.NETLIFY_SITE_ID }}
     runs-on: ubuntu-latest
     steps:
