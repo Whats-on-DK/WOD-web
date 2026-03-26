@@ -63,6 +63,13 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
   let editingEventId = null;
   let editingEventData = null;
 
+  const redirectAfterGuestSubmit = (eventId = '') => {
+    const params = new URLSearchParams();
+    if (eventId) params.set('id', eventId);
+    const query = params.toString();
+    window.location.href = `./submission-success.html${query ? `?${query}` : ''}`;
+  };
+
   const isAdminBypass = () => {
     if (identityUser && hasAdminRole(identityUser)) return true;
     const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
@@ -922,7 +929,7 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
             facebook: payload['contact-facebook'] || '',
             telegram: payload['contact-telegram'] || ''
           },
-          status: keepArchived ? 'archived' : 'published',
+          status: keepArchived ? 'archived' : isAdminBypass() ? 'published' : 'pending',
           archived: keepArchived,
           forUkrainians: editingEventData?.forUkrainians ?? true,
           familyFriendly: editingEventData?.familyFriendly ?? false,
@@ -933,7 +940,11 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
           submitStatus.textContent = formatMessage('submit_success', {});
         }
         if (saved?.id) {
-          window.location.href = `./event-card.html?id=${encodeURIComponent(saved.id)}`;
+          if (isAdminBypass()) {
+            window.location.href = `./event-card.html?id=${encodeURIComponent(saved.id)}`;
+          } else {
+            redirectAfterGuestSubmit(saved.id);
+          }
         }
         return;
       }
@@ -981,7 +992,11 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
           submitStatus.textContent = formatMessage('submit_success', {});
         }
         if (result?.id) {
-          window.location.href = `./event-card.html?id=${encodeURIComponent(result.id)}`;
+          if (isAdminBypass()) {
+            window.location.href = `./event-card.html?id=${encodeURIComponent(result.id)}`;
+          } else {
+            redirectAfterGuestSubmit(result.id);
+          }
         }
       }
     } catch (error) {

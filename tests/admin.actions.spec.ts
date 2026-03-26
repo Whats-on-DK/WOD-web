@@ -20,6 +20,42 @@ test('admin can archive and restore event from detail page', async ({ page }) =>
   await expect(archiveBtn).toBeVisible();
 });
 
+test('pending "Переглянути" opens full event page instead of inline modal', async ({ page }) => {
+  await enableAdminSession(page);
+  await page.route('**/.netlify/functions/admin-events*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ok: true,
+        pending: [
+          {
+            id: 'evt-pending-view',
+            title: 'Pending Review Event',
+            meta: 'Копенгаген · 01.06.2030',
+            payload: {
+              title: 'Pending Review Event',
+              description: 'Pending description',
+              tags: ['Community']
+            },
+            history: []
+          }
+        ],
+        rejected: [],
+        audit: [],
+        verifications: [],
+        archive: []
+      })
+    })
+  );
+
+  await page.goto('/admin-page.html');
+  const pendingCard = page.locator('[data-admin-card][data-event-id="evt-pending-view"]');
+  await expect(pendingCard).toBeVisible();
+  await pendingCard.locator('[data-action="view"]').click();
+  await expect(page).toHaveURL(/event-card\.html\?id=evt-pending-view&admin=1/);
+});
+
 test('admin can delete event from detail page with confirm', async ({ page }) => {
   await enableAdminSession(page);
   await page.goto('/event-card.html?id=evt-006');
