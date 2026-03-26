@@ -165,27 +165,31 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
   redirectIdentityHashToLogin();
 
   if (document.body.classList.contains('new-event-page')) {
-    const redirect = encodeURIComponent('./new-event.html');
-    if (!hasLocalAdminSession()) {
-      loadIdentityWidget().then((identity) => {
-        if (!identity) {
-          window.location.replace(`./admin-login.html?redirect=${redirect}`);
-          return;
-        }
-        let resolved = false;
-        identity.on('init', (user) => {
-          resolved = true;
-          if (!user || !hasAdminRole(user)) {
+    const params = new URLSearchParams(window.location.search);
+    const isEditMode = params.has('id');
+    if (isEditMode) {
+      const redirect = encodeURIComponent(`./new-event.html${window.location.search || ''}`);
+      if (!hasLocalAdminSession()) {
+        loadIdentityWidget().then((identity) => {
+          if (!identity) {
             window.location.replace(`./admin-login.html?redirect=${redirect}`);
+            return;
           }
+          let resolved = false;
+          identity.on('init', (user) => {
+            resolved = true;
+            if (!user || !hasAdminRole(user)) {
+              window.location.replace(`./admin-login.html?redirect=${redirect}`);
+            }
+          });
+          identity.init();
+          window.setTimeout(() => {
+            if (!resolved) {
+              window.location.replace(`./admin-login.html?redirect=${redirect}`);
+            }
+          }, 800);
         });
-        identity.init();
-        window.setTimeout(() => {
-          if (!resolved) {
-            window.location.replace(`./admin-login.html?redirect=${redirect}`);
-          }
-        }, 800);
-      });
+      }
     }
   }
 

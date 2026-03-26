@@ -68,6 +68,15 @@ test('submit-event validates required fields', () => {
   assert.match(content, /errors\.push\('ticket-type'\)/);
   assert.match(content, /errors\.push\('contact-name'\)/);
   assert.match(content, /errors\.push\('tags'\)/);
+  assert.match(content, /const isAdmin = hasAdminRole\(roles\);/);
+  assert.match(content, /const status = isAdmin \? 'published' : 'pending';/);
+  assert.doesNotMatch(content, /error:\s*'forbidden'/);
+});
+
+test('homepage hero CTA points to create-event page', () => {
+  const content = readFile('../../index.html');
+  assert.match(content, /href=\"\.\/new-event\.html\"/);
+  assert.match(content, /data-i18n=\"cta_add_event\"/);
 });
 
 test('admin-event fetches by id or external_id and enforces admin access', () => {

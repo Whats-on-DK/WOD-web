@@ -123,17 +123,11 @@ export const handler = async (event: HandlerEvent, context: HandlerContext) => {
     }
 
     const roles = getRoles(context);
-    if (!hasAdminRole(roles)) {
-      return {
-        statusCode: 403,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ok: false, error: 'forbidden' })
-      };
-    }
+    const isAdmin = hasAdminRole(roles);
 
     const id = `evt-${Date.now()}`;
     const title = payload.title || payload.name || payload.eventTitle || 'Untitled event';
-    const status = payload.status === 'approved' ? 'published' : 'published';
+    const status = isAdmin ? 'published' : 'pending';
     const contactName = String(payload['contact-name'] || '');
     const contactEmail = String(payload['contact-email'] || '');
     const contactPhone = String(payload['contact-phone'] || '');
@@ -211,8 +205,8 @@ export const handler = async (event: HandlerEvent, context: HandlerContext) => {
         body: [
           {
             event_id: savedEvent.id,
-            action: 'publish',
-            actor: context.clientContext?.user?.email || 'admin',
+            action: isAdmin ? 'publish' : 'submit',
+            actor: context.clientContext?.user?.email || 'guest',
             payload: { title }
           }
         ]

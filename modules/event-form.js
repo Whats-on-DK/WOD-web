@@ -701,7 +701,7 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     if (isAdminBypass()) return 'admin';
     if (verification.websiteApproved) return 'verified';
     if (verification.websitePending) return 'pending_manual';
-    return 'none';
+    return 'verified';
   };
 
   updatePreview();
@@ -712,16 +712,18 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
   publishState.update = () => {
     const isAdmin = isAdminBypass();
     applyAdminOnlyContactVisibility(isAdmin);
-    const verified = getEffectiveOrganizerStatus() !== 'none';
     const hasTags = pendingTags.size > 0;
     if (publishButton) {
-      publishButton.disabled = isAdmin ? false : !verified || !hasTags;
+      publishButton.disabled = !hasTags;
+      const submitKey = isAdmin ? 'form_submit_publish' : 'form_submit_moderation';
+      publishButton.dataset.i18n = submitKey;
+      publishButton.textContent = formatMessage(submitKey, {});
     }
     if (verificationWarning) {
-      verificationWarning.hidden = isAdmin || verified;
+      verificationWarning.hidden = true;
     }
     if (verificationBanner) {
-      verificationBanner.hidden = isAdmin || verified;
+      verificationBanner.hidden = true;
     }
   };
   publishState.update();
@@ -802,14 +804,6 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     flushTagInput();
     if (!ensureTagsSelected(true)) {
       event.preventDefault();
-      return;
-    }
-    const verified = getEffectiveOrganizerStatus() !== 'none';
-    if (!verified) {
-      event.preventDefault();
-      if (verificationWarning) {
-        verificationWarning.hidden = false;
-      }
       return;
     }
     event.preventDefault();
