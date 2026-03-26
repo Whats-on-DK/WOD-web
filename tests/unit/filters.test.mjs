@@ -61,3 +61,25 @@ test('favorites quick filter shows only saved events', () => {
     ['evt-1']
   );
 });
+
+test('new quick filter keeps only events created in last 14 days', () => {
+  const now = new Date('2026-03-26T12:00:00Z');
+  const fresh = {
+    id: 'evt-fresh',
+    status: 'published',
+    createdAt: '2026-03-20T12:00:00Z'
+  };
+  const stale = {
+    id: 'evt-stale',
+    status: 'published',
+    createdAt: '2026-03-01T12:00:00Z'
+  };
+  const missingCreated = {
+    id: 'evt-missing',
+    status: 'published'
+  };
+
+  assert.equal(eventMatchesFilters(fresh, { quickNew: true }, helpers, { now }), true);
+  assert.equal(eventMatchesFilters(stale, { quickNew: true }, helpers, { now }), false);
+  assert.equal(eventMatchesFilters(missingCreated, { quickNew: true }, helpers, { now }), false);
+});

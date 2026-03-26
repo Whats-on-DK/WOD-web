@@ -65,7 +65,7 @@ export const handler = async (event: HandlerEvent, _context: HandlerContext) => 
         limit: String(limit),
         offset: String(offset),
         select:
-          'id,external_id,slug,title,start_at,end_at,format,venue,address,city,price_type,price_min,price_max,registration_url,organizer_id,image_url,status,language'
+          'id,external_id,slug,title,start_at,end_at,format,venue,address,city,price_type,price_min,price_max,registration_url,organizer_id,image_url,status,language,created_at'
       }
     })) as any[];
     const eventIds = events.map((event) => event.id).filter(Boolean);
@@ -126,6 +126,7 @@ export const handler = async (event: HandlerEvent, _context: HandlerContext) => 
         images: imageUrl ? [imageUrl] : [],
         status: event.status || 'published',
         language: event.language || '',
+        createdAt: event.created_at || '',
         forUkrainians: true,
         familyFriendly: false,
         volunteer: false,

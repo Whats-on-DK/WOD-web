@@ -14,7 +14,7 @@ test('public-events uses published-only select queries', () => {
   assert.match(content, /offset:\s*String\(offset\)/);
   assert.match(
     content,
-    /select:\s*'id,external_id,slug,title,start_at,end_at,format,venue,address,city,price_type,price_min,price_max,registration_url,organizer_id,image_url,status,language'/
+    /select:\s*'id,external_id,slug,title,start_at,end_at,format,venue,address,city,price_type,price_min,price_max,registration_url,organizer_id,image_url,status,language,created_at'/
   );
   assert.match(
     content,

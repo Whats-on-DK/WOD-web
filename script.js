@@ -1282,11 +1282,10 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
     const advancedPanel = document.querySelector('#filters-advanced');
     const presetButtons = filtersForm ? Array.from(filtersForm.querySelectorAll('.filters__preset')) : [];
     const presetInputs = filtersForm
-      ? {
+        ? {
           today: filtersForm.elements['quick-today'],
-          tomorrow: filtersForm.elements['quick-tomorrow'],
           weekend: filtersForm.elements['quick-weekend'],
-          online: filtersForm.elements['quick-online'],
+          new: filtersForm.elements['quick-new'],
           favorites: filtersForm.elements['quick-favorites']
         }
       : {};
@@ -2424,7 +2423,13 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
       );
       const showPast = filters.showPast;
       const nextFilteredEvents = baseList.slice();
-      if (showPast) {
+      if (filters.quickNew) {
+        nextFilteredEvents.sort((a, b) => {
+          const aCreated = new Date(a.createdAt || a.created_at || 0).getTime();
+          const bCreated = new Date(b.createdAt || b.created_at || 0).getTime();
+          return bCreated - aCreated;
+        });
+      } else if (showPast) {
         nextFilteredEvents.sort((a, b) => {
           const aDate = new Date(a.end || a.start || 0).getTime();
           const bDate = new Date(b.end || b.start || 0).getTime();
@@ -2478,7 +2483,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
     };
 
     const clearOtherDatePresets = (activeKey) => {
-      ['today', 'tomorrow', 'weekend'].forEach((key) => {
+      ['today', 'weekend'].forEach((key) => {
         if (activeKey && key === activeKey) return;
         const input = presetInputs[key];
         if (input) {
@@ -2490,11 +2495,6 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
     const applyDatePreset = (key) => {
       if (key === 'today') {
         setDateRange(new Date(), new Date());
-      }
-      if (key === 'tomorrow') {
-        const date = new Date();
-        date.setDate(date.getDate() + 1);
-        setDateRange(date, date);
       }
       if (key === 'weekend') {
         const now = new Date();
@@ -2644,7 +2644,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         });
       }
 
-      ['today', 'tomorrow', 'weekend', 'online'].forEach((key) => {
+      ['today', 'weekend', 'new'].forEach((key) => {
         const input = presetInputs[key];
         const button = presetButtons.find((btn) => btn.dataset.quick === key);
         if (!input || !button) return;
@@ -2654,16 +2654,9 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           input.checked = true;
           changed = true;
         }
-        if (['today', 'tomorrow', 'weekend'].includes(key)) {
+        if (['today', 'weekend'].includes(key)) {
           clearOtherDatePresets(key);
           applyDatePreset(key);
-        }
-        if (key === 'online') {
-          const formatField = filtersForm.elements.format;
-          if (formatField && formatField.value !== 'online') {
-            formatField.value = 'online';
-            changed = true;
-          }
         }
       });
 
@@ -2739,33 +2732,24 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         setValue('price', params.get('price') || '');
         setValue('format', params.get('format') || '');
         const quickToday = filtersForm.elements['quick-today'];
-        const quickTomorrow = filtersForm.elements['quick-tomorrow'];
         const quickWeekend = filtersForm.elements['quick-weekend'];
-        const quickOnline = filtersForm.elements['quick-online'];
+        const quickNew = filtersForm.elements['quick-new'];
         const quickFavorites = filtersForm.elements['quick-favorites'];
         const showPast = filtersForm.elements['show-past'];
         if (quickToday) {
           quickToday.checked = params.get('today') === '1';
         }
-        if (quickTomorrow) {
-          quickTomorrow.checked = params.get('tomorrow') === '1';
-        }
         if (quickWeekend) {
           quickWeekend.checked = params.get('weekend') === '1';
         }
-        if (quickOnline) {
-          quickOnline.checked = params.get('online') === '1';
+        if (quickNew) {
+          quickNew.checked = params.get('new') === '1';
         }
         if (quickFavorites) {
           quickFavorites.checked = params.get('favorites') === '1';
         }
         if (quickToday && quickToday.checked) {
           setDateRange(new Date(), new Date());
-        }
-        if (quickTomorrow && quickTomorrow.checked) {
-          const date = new Date();
-          date.setDate(date.getDate() + 1);
-          setDateRange(date, date);
         }
         if (quickWeekend && quickWeekend.checked) {
           const now = new Date();
@@ -2776,9 +2760,6 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           const sunday = new Date(saturday);
           sunday.setDate(saturday.getDate() + 1);
           setDateRange(saturday, sunday);
-        }
-        if (quickOnline && quickOnline.checked) {
-          setValue('format', 'online');
         }
         if (showPast) {
           showPast.checked = params.get('past') === '1';
@@ -2802,9 +2783,8 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         'format',
         'tags',
         'today',
-        'tomorrow',
         'weekend',
-        'online',
+        'new',
         'favorites',
         'past',
         'page'
@@ -2843,14 +2823,11 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         if (formData.get('quick-today')) {
           params.set('today', '1');
         }
-        if (formData.get('quick-tomorrow')) {
-          params.set('tomorrow', '1');
-        }
         if (formData.get('quick-weekend')) {
           params.set('weekend', '1');
         }
-        if (formData.get('quick-online')) {
-          params.set('online', '1');
+        if (formData.get('quick-new')) {
+          params.set('new', '1');
         }
         if (formData.get('quick-favorites')) {
           params.set('favorites', '1');
@@ -2925,13 +2902,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           if (!input) return;
           const nextState = !input.checked;
           input.checked = nextState;
-          if (key === 'online') {
-            const formatField = filtersForm.elements.format;
-            if (formatField) {
-              formatField.value = nextState ? 'online' : '';
-            }
-          }
-          if (['today', 'tomorrow', 'weekend'].includes(key)) {
+          if (['today', 'weekend'].includes(key)) {
             if (nextState) {
               clearOtherDatePresets(key);
               applyDatePreset(key);
@@ -2953,21 +2924,12 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         }
         if (target instanceof HTMLInputElement && target.type === 'checkbox') {
           const today = filtersForm.elements['quick-today'];
-          const tomorrow = filtersForm.elements['quick-tomorrow'];
           const weekend = filtersForm.elements['quick-weekend'];
-          const online = filtersForm.elements['quick-online'];
           if (target === today && today.checked) {
             clearOtherDatePresets('today');
             applyDatePreset('today');
           }
           if (target === today && !today.checked) {
-            setDateRange(null, null);
-          }
-          if (target === tomorrow && tomorrow.checked) {
-            clearOtherDatePresets('tomorrow');
-            applyDatePreset('tomorrow');
-          }
-          if (target === tomorrow && !tomorrow.checked) {
             setDateRange(null, null);
           }
           if (target === weekend && weekend.checked) {
@@ -2977,18 +2939,6 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           if (target === weekend && !weekend.checked) {
             setDateRange(null, null);
           }
-          if (target === online && online.checked) {
-            const formatField = filtersForm.elements.format;
-            if (formatField) {
-              formatField.value = 'online';
-            }
-          }
-          if (target === online && !online.checked) {
-            const formatField = filtersForm.elements.format;
-            if (formatField) {
-              formatField.value = '';
-            }
-          }
           if (target === showPastField) {
             syncPastFilterState(true);
             syncShowPastToggle();
@@ -2997,13 +2947,6 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
         }
         if (target instanceof HTMLInputElement && target.type === 'date') {
           clearOtherDatePresets();
-          syncPresetButtons();
-        }
-        if (target instanceof HTMLSelectElement && target.name === 'format') {
-          const onlineInput = presetInputs.online;
-          if (onlineInput) {
-            onlineInput.checked = target.value === 'online';
-          }
           syncPresetButtons();
         }
         updateCatalogQueryParams();

@@ -51,6 +51,21 @@ test('quick date presets toggle off clears URL and date inputs', async ({ page }
   await expect(dateTo).toHaveValue('');
 });
 
+test('quick new preset toggles URL state', async ({ page }) => {
+  await page.goto('/');
+  await waitForEventsRendered(page);
+
+  await expect(page.locator('.filters__preset[data-quick="tomorrow"]')).toHaveCount(0);
+  await expect(page.locator('.filters__preset[data-quick="online"]')).toHaveCount(0);
+
+  const quickNew = page.getByTestId('filters-new');
+  await quickNew.click();
+  await expect(page).toHaveURL(/new=1/);
+
+  await quickNew.click();
+  await expect(page).not.toHaveURL(/new=1/);
+});
+
 test('deep-link tags applies on initial load and keeps tags in URL', async ({ page }) => {
   await page.goto('/?tags=community');
   await waitForEventsRendered(page);
