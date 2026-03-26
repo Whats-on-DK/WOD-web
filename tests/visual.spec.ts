@@ -67,10 +67,9 @@ for (const route of routes) {
     }
     if (route.key === 'new-event') {
       const form = page.locator('form.multi-step');
-      const steps = page.locator('.stepper');
       await page.locator('.multi-step[data-ready="true"]').waitFor({ state: 'attached' });
       await expect(form).toBeVisible();
-      await expect(steps).toBeVisible();
+      await expect(page.locator('.stepper')).toHaveCount(0);
       expect(await form.screenshot()).toMatchSnapshot('new-event-form.png', { maxDiffPixels: 200 });
     }
     if (route.key === 'event-card') {

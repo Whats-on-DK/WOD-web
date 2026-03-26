@@ -41,31 +41,27 @@ export async function createEventToPreview(page) {
   await page.locator('.multi-step').waitFor({ state: 'attached' });
   await page.locator('.multi-step[data-ready="true"]').waitFor({ state: 'attached' });
 
-  // Step 1: basics
+  // Basics
   await page.getByLabel(/Назва|Title|Titel/i).fill('Test meetup');
   await page.getByLabel(/Опис|Description|Beskrivelse/i).fill('Short event description for preview.');
   const tagsInput = page.getByLabel(/Додати тег|Add tag|Tilføj tag/i);
   await tagsInput.fill('Community');
   await tagsInput.press('Enter');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
-  await page.getByLabel(/Початок|Start/i).waitFor({ state: 'visible' });
 
-  // Step 2: time & location
+  // Time & location
   await page.getByLabel(/Початок|Start/i).fill('2030-05-01T18:00');
   await page.getByLabel(/Завершення|End/i).fill('2030-05-01T20:00');
   await page.locator('select[name="format"]').selectOption({ value: 'offline' });
   await page.locator('select[name="language"]').selectOption({ value: 'uk' });
   await page.getByLabel(/Адреса|Address|Adresse/i).fill('Copenhagen, Main St 10');
   await page.locator('input[name="city"]').fill('Copenhagen');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
 
-  // Step 3: tickets
+  // Tickets
   await page.getByLabel(/Платно|Paid|Betalt/i).check();
   await page.getByLabel(/Ціна квитка|Ticket price|Pris/i).fill('50–120');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
-  await page.locator('input[name="image"]').waitFor({ state: 'visible' });
 
-  // Step 4: contacts
+  // Media + contacts
+  await page.locator('input[name="image"]').waitFor({ state: 'visible' });
   await page.locator('input[name="image"]').setInputFiles({
     name: 'event.png',
     mimeType: 'image/png',
@@ -75,5 +71,4 @@ export async function createEventToPreview(page) {
     )
   });
   await page.getByLabel(/Організація|Organization|Organisation/i).fill('Community Hub');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
 }

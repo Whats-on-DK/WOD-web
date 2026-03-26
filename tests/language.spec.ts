@@ -11,7 +11,6 @@ test('create local event with en/da language and show it in detail and catalog',
   const tagsInput = page.getByLabel(/Додати тег|Add tag|Tilføj tag/i);
   await tagsInput.fill('Community');
   await tagsInput.press('Enter');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
 
   await page.getByLabel(/Початок|Start/i).fill('2030-06-01T18:00');
   await page.getByLabel(/Завершення|End/i).fill('2030-06-01T20:00');
@@ -19,10 +18,8 @@ test('create local event with en/da language and show it in detail and catalog',
   await page.locator('select[name="language"]').selectOption({ value: 'en/da' });
   await page.getByLabel(/Адреса|Address|Adresse/i).fill('Copenhagen, Main St 10');
   await page.locator('input[name="city"]').fill('Copenhagen');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
 
   await page.getByLabel(/Безкоштовно|Free|Gratis/i).check();
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
 
   await page.locator('input[name="image"]').setInputFiles({
     name: 'event.png',
@@ -34,7 +31,6 @@ test('create local event with en/da language and show it in detail and catalog',
   });
   await page.locator('input[name="contact-name"]').fill('Olena K.');
   await page.locator('input[name="contact-email"]').fill('verify@example.com');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
   await page.locator('button[type="submit"]').click();
 
   await expect(page).toHaveURL(/event-card\.html\?id=/);

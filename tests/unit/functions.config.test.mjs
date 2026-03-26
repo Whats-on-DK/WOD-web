@@ -14,7 +14,7 @@ test('public-events uses published-only select queries', () => {
   assert.match(content, /offset:\s*String\(offset\)/);
   assert.match(
     content,
-    /select:\s*'id,external_id,slug,title,start_at,end_at,format,venue,address,city,price_type,price_min,price_max,registration_url,organizer_id,image_url,status,language'/
+    /select:\s*'id,external_id,slug,title,start_at,end_at,format,venue,address,city,price_type,price_min,price_max,registration_url,organizer_id,image_url,status,language,created_at'/
   );
   assert.match(
     content,
@@ -68,6 +68,15 @@ test('submit-event validates required fields', () => {
   assert.match(content, /errors\.push\('ticket-type'\)/);
   assert.match(content, /errors\.push\('contact-name'\)/);
   assert.match(content, /errors\.push\('tags'\)/);
+  assert.match(content, /const isAdmin = hasAdminRole\(roles\);/);
+  assert.match(content, /const status = isAdmin \? 'published' : 'pending';/);
+  assert.doesNotMatch(content, /error:\s*'forbidden'/);
+});
+
+test('homepage hero CTA points to create-event page', () => {
+  const content = readFile('../../index.html');
+  assert.match(content, /href=\"\.\/new-event\.html\"/);
+  assert.match(content, /data-i18n=\"cta_add_event\"/);
 });
 
 test('admin-event fetches by id or external_id and enforces admin access', () => {

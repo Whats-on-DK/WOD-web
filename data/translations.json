@@ -27,9 +27,8 @@
     "search_placeholder": "Пошук за містом, тематикою або датою",
     "presets": {
       "today": "Сьогодні",
-      "tomorrow": "Завтра",
       "weekend": "Вихідні",
-      "online": "Онлайн",
+      "new": "Нові події",
       "favorites": "Вибрані"
     },
     "search_label": "Пошук подій",

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { freezeTime } from './setup.freeze-time';
 import { waitForEventsRendered } from './helpers';
 
-test('main page renders key sections and hides add-event CTA', async ({ page }) => {
+test('main page renders key sections and shows add-event CTA', async ({ page }) => {
   await freezeTime(page);
   await page.goto('/');
   await waitForEventsRendered(page);
@@ -11,7 +11,7 @@ test('main page renders key sections and hides add-event CTA', async ({ page }) 
   await expect(page.locator('#events')).toBeVisible();
 
   const addEventLinks = page.getByRole('link', { name: /Додати подію/i });
-  await expect(addEventLinks).toHaveCount(0);
+  await expect(addEventLinks).toHaveCount(1);
 });
 
 test('hero card shows background image when available', async ({ page }) => {
@@ -25,13 +25,13 @@ test('hero card shows background image when available', async ({ page }) => {
   expect(backgroundImage).not.toBe('none');
 });
 
-test('hero CTA navigates to catalog anchor', async ({ page }) => {
+test('hero CTA navigates to public event form', async ({ page }) => {
   await freezeTime(page);
   await page.goto('/');
 
-  const cta = page.getByRole('link', { name: /Переглянути події/i });
+  const cta = page.getByRole('link', { name: /Додати подію/i });
   await cta.click();
-  await expect(page.locator('#events')).toBeInViewport();
+  await expect(page).toHaveURL(/new-event\.html/);
 });
 
 test('advanced filters toggle is controlled only by the button', async ({ page }) => {
@@ -60,7 +60,7 @@ test('quick presets do not auto-open advanced filters', async ({ page }) => {
   const advancedPanel = page.locator('#filters-advanced');
   const advancedToggle = page.locator('[data-action="filters-advanced"]');
 
-  await page.getByRole('button', { name: /Онлайн/i }).click();
+  await page.getByRole('button', { name: /Нові події/i }).click();
   await page.locator('input[name="show-past"]').setChecked(true, { force: true });
 
   await expect(advancedPanel).toBeHidden();

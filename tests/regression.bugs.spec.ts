@@ -67,13 +67,9 @@ test('editing a published event updates description on detail page', async ({ pa
   const descriptionField = page.getByLabel(/Опис|Description|Beskrivelse/i);
   await expect(descriptionField).toHaveValue('Short event description for preview.');
   await descriptionField.fill('Updated description after edit.');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
   await page.getByLabel(/Початок|Start/i).waitFor({ state: 'visible' });
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
   await page.getByLabel(/Платно|Paid|Betalt|Безкоштовно|Free|Gratis/i).first().waitFor({ state: 'visible' });
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
   await page.locator('input[name="image"]').waitFor({ state: 'visible' });
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
 
   await page.getByRole('button', { name: /Опублікувати|Publish|Udgiv/i }).click();
   await expect(page).toHaveURL(/event-card\.html\?id=/);

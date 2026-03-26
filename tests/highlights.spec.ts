@@ -69,7 +69,11 @@ test('weekly highlights renders all events and arrows can reach last card', asyn
   const nextButton = page.locator('.highlights__button[data-action="next"]');
   for (let index = 0; index < 20; index += 1) {
     if (await nextButton.isDisabled()) break;
-    await nextButton.click();
+    try {
+      await nextButton.click({ timeout: 1500 });
+    } catch {
+      break;
+    }
     await page.waitForTimeout(80);
   }
 

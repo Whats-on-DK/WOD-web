@@ -15,10 +15,6 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
   const multiStepForm = document.querySelector('.multi-step');
   if (!multiStepForm) return;
 
-  const steps = Array.from(multiStepForm.querySelectorAll('.form-step'));
-  const stepperItems = Array.from(document.querySelectorAll('.stepper__item'));
-  const nextButton = multiStepForm.querySelector('[data-action="next"]');
-  const backButton = multiStepForm.querySelector('[data-action="back"]');
   const previewTitle = document.querySelector('#preview-title');
   const previewOrganizer = document.querySelector('#preview-organizer');
   const previewDescription = document.querySelector('#preview-description');
@@ -43,9 +39,19 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
   const verificationBanner = multiStepForm.querySelector('[data-verification-banner]');
   const verificationBannerButton = multiStepForm.querySelector('[data-action="open-verification"]');
   const honeypotField = multiStepForm.querySelector('input[name="website"]');
+  const adminOnlyContactFieldNames = [
+    'contact-email',
+    'contact-phone',
+    'contact-website',
+    'contact-instagram',
+    'contact-facebook',
+    'contact-telegram'
+  ];
+  const adminOnlyContactFields = adminOnlyContactFieldNames
+    .map((name) => multiStepForm.querySelector(`[name="${name}"]`))
+    .filter(Boolean);
   const pendingTags = new Set();
   const knownTagsByKey = new Map();
-  let currentStep = 0;
   const publishButton = multiStepForm.querySelector('button[type="submit"]');
   const verificationWarning = multiStepForm.querySelector('[data-verification-warning]');
   const submitStatus = multiStepForm.querySelector('[data-submit-status]');
@@ -57,6 +63,13 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
   let editingEventId = null;
   let editingEventData = null;
 
+  const redirectAfterGuestSubmit = (eventId = '') => {
+    const params = new URLSearchParams();
+    if (eventId) params.set('id', eventId);
+    const query = params.toString();
+    window.location.href = `./submission-success.html${query ? `?${query}` : ''}`;
+  };
+
   const isAdminBypass = () => {
     if (identityUser && hasAdminRole(identityUser)) return true;
     const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
@@ -66,6 +79,36 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     } catch (error) {
       return false;
     }
+  };
+
+  const applyAdminOnlyContactVisibility = (isAdmin) => {
+    adminOnlyContactFields.forEach((field) => {
+      if (
+        !(
+          field instanceof HTMLInputElement ||
+          field instanceof HTMLTextAreaElement ||
+          field instanceof HTMLSelectElement
+        )
+      ) {
+        return;
+      }
+      const wrapper = field.closest('.form-field');
+      if (wrapper instanceof HTMLElement) {
+        wrapper.hidden = !isAdmin;
+      }
+      field.disabled = !isAdmin;
+      if (!isAdmin) {
+        field.value = '';
+        field.setCustomValidity('');
+      }
+    });
+  };
+
+  const scrubNonAdminContactPayload = (payload) => {
+    if (isAdminBypass()) return;
+    adminOnlyContactFieldNames.forEach((key) => {
+      payload[key] = '';
+    });
   };
 
   const getTagsRequiredMessage = () =>
@@ -393,27 +436,14 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     window.netlifyIdentity.init();
   };
 
-  const setStep = (index) => {
-    steps.forEach((step, stepIndex) => {
-      const isActive = stepIndex === index;
-      step.classList.toggle('is-active', isActive);
-      step.hidden = !isActive;
-    });
-    stepperItems.forEach((item, itemIndex) => {
-      if (itemIndex === index) {
-        item.setAttribute('aria-current', 'step');
-      } else {
-        item.removeAttribute('aria-current');
+  const getValidatableFields = () =>
+    Array.from(multiStepForm.querySelectorAll('input, select, textarea')).filter((field) => {
+      if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) {
+        return false;
       }
+      if (field.type === 'hidden' || field.disabled) return false;
+      return true;
     });
-    if (backButton) {
-      backButton.disabled = index === 0;
-    }
-    if (nextButton) {
-      nextButton.hidden = index === steps.length - 1;
-    }
-    updatePreview();
-  };
 
   const getFieldValue = (name) => {
     const field = multiStepForm.elements[name];
@@ -623,20 +653,52 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     });
   }
 
-  const validateStep = () => {
-    if (currentStep === 0) {
-      ensureTagsSelected(false);
+  const validateForm = () => {
+    ensureTagsSelected(false);
+    const descriptionValue = String(descriptionField?.value || '').trim();
+    if (!descriptionValue) {
+      const message = formatMessage('form_description_required', {}) || 'Опис події обовʼязковий.';
+      if (descriptionField) {
+        descriptionField.setCustomValidity(message);
+        descriptionField.reportValidity();
+        descriptionField.focus();
+      }
+      if (submitStatus) {
+        submitStatus.textContent = message;
+      }
+      return false;
     }
-    const activeStep = steps[currentStep];
-    if (!activeStep) return true;
-    const fields = Array.from(activeStep.querySelectorAll('input, select, textarea')).filter(
-      (field) => field.type !== 'hidden'
-    );
+    if (descriptionField) {
+      descriptionField.setCustomValidity('');
+    }
+
+    if (cityField instanceof HTMLInputElement) {
+      const formatValue = String(getFieldValue('format') || '').trim().toLowerCase();
+      const cityRequired = formatValue !== 'online';
+      const cityValue = String(cityField.value || '').trim();
+      if (cityRequired && !cityValue) {
+        const message = formatMessage('form_city_required', {}) || 'Місто обовʼязкове.';
+        cityField.setCustomValidity(message);
+        cityField.reportValidity();
+        cityField.focus();
+        if (submitStatus) {
+          submitStatus.textContent = message;
+        }
+        return false;
+      }
+      cityField.setCustomValidity('');
+    }
+
+    const fields = getValidatableFields();
     for (const field of fields) {
+      if (field === descriptionField || field === cityField) continue;
       if (!field.checkValidity()) {
         field.reportValidity();
         return false;
       }
+    }
+    if (submitStatus) {
+      submitStatus.textContent = '';
     }
     return true;
   };
@@ -646,26 +708,29 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     if (isAdminBypass()) return 'admin';
     if (verification.websiteApproved) return 'verified';
     if (verification.websitePending) return 'pending_manual';
-    return 'none';
+    return 'verified';
   };
 
-  setStep(currentStep);
+  updatePreview();
   renderTagChips();
   loadKnownTags().then(() => {
     renderTagSuggestions(tagsInput?.value || '');
   });
   publishState.update = () => {
     const isAdmin = isAdminBypass();
-    const verified = getEffectiveOrganizerStatus() !== 'none';
+    applyAdminOnlyContactVisibility(isAdmin);
     const hasTags = pendingTags.size > 0;
     if (publishButton) {
-      publishButton.disabled = isAdmin ? false : !verified || !hasTags;
+      publishButton.disabled = !hasTags;
+      const submitKey = isAdmin ? 'form_submit_publish' : 'form_submit_moderation';
+      publishButton.dataset.i18n = submitKey;
+      publishButton.textContent = formatMessage(submitKey, {});
     }
     if (verificationWarning) {
-      verificationWarning.hidden = isAdmin || verified;
+      verificationWarning.hidden = true;
     }
     if (verificationBanner) {
-      verificationBanner.hidden = isAdmin || verified;
+      verificationBanner.hidden = true;
     }
   };
   publishState.update();
@@ -721,34 +786,31 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     });
   }
 
-  if (nextButton) {
-    nextButton.addEventListener('click', () => {
-      flushTagInput();
-      if (!validateStep()) return;
-      currentStep = Math.min(currentStep + 1, steps.length - 1);
-      setStep(currentStep);
-    });
-  }
+  multiStepForm.addEventListener('input', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) {
+      return;
+    }
+    if (target === descriptionField || target === cityField) {
+      target.setCustomValidity('');
+    }
+    if (target === tagsInput) return;
+    updatePreview();
+  });
 
-  if (backButton) {
-    backButton.addEventListener('click', () => {
-      currentStep = Math.max(currentStep - 1, 0);
-      setStep(currentStep);
-    });
-  }
+  multiStepForm.addEventListener('change', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) {
+      return;
+    }
+    if (target === imageInput || target === formatSelect || target === tagsInput) return;
+    updatePreview();
+  });
 
   multiStepForm.addEventListener('submit', async (event) => {
     flushTagInput();
     if (!ensureTagsSelected(true)) {
       event.preventDefault();
-      return;
-    }
-    const verified = getEffectiveOrganizerStatus() !== 'none';
-    if (!verified) {
-      event.preventDefault();
-      if (verificationWarning) {
-        verificationWarning.hidden = false;
-      }
       return;
     }
     event.preventDefault();
@@ -767,7 +829,7 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     if (statusField) {
       statusField.value = isAdminBypass() ? 'approved' : 'pending';
     }
-    if (!validateStep()) {
+    if (!validateForm()) {
       return;
     }
     if (submitStatus) {
@@ -777,6 +839,7 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
       const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
       const formData = new FormData(multiStepForm);
       const payload = Object.fromEntries(formData.entries());
+      scrubNonAdminContactPayload(payload);
       payload.language = normalizeEventLanguage(payload.language);
       payload.description = String(payload.description || '').trim();
       if (!payload.description) {
@@ -866,7 +929,7 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
             facebook: payload['contact-facebook'] || '',
             telegram: payload['contact-telegram'] || ''
           },
-          status: keepArchived ? 'archived' : 'published',
+          status: keepArchived ? 'archived' : isAdminBypass() ? 'published' : 'pending',
           archived: keepArchived,
           forUkrainians: editingEventData?.forUkrainians ?? true,
           familyFriendly: editingEventData?.familyFriendly ?? false,
@@ -877,7 +940,11 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
           submitStatus.textContent = formatMessage('submit_success', {});
         }
         if (saved?.id) {
-          window.location.href = `./event-card.html?id=${encodeURIComponent(saved.id)}`;
+          if (isAdminBypass()) {
+            window.location.href = `./event-card.html?id=${encodeURIComponent(saved.id)}`;
+          } else {
+            redirectAfterGuestSubmit(saved.id);
+          }
         }
         return;
       }
@@ -925,7 +992,11 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
           submitStatus.textContent = formatMessage('submit_success', {});
         }
         if (result?.id) {
-          window.location.href = `./event-card.html?id=${encodeURIComponent(result.id)}`;
+          if (isAdminBypass()) {
+            window.location.href = `./event-card.html?id=${encodeURIComponent(result.id)}`;
+          } else {
+            redirectAfterGuestSubmit(result.id);
+          }
         }
       }
     } catch (error) {

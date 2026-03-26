@@ -3427,7 +3427,8 @@ body[data-admin-auth="denied"] [data-admin-protected] {
 }
 
 .multi-step {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 20px;
 }
 

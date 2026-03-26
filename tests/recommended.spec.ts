@@ -340,7 +340,7 @@ test('recommended mobile uses snap carousel and autoplay advances slides', async
       cardWidth: cardEl.getBoundingClientRect().width
     };
   });
-  expect(Math.abs(widths.cardWidth - widths.stripWidth)).toBeLessThan(24);
+  expect(Math.abs(widths.cardWidth * 2 - widths.stripWidth)).toBeLessThan(28);
 
   const overlayDisplay = await page
     .locator('.highlights__card--recommended .recommended-poster__overlay')

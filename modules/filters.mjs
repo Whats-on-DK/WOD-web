@@ -6,6 +6,7 @@ export const defaultNormalizeCity = (value) =>
     .toLowerCase();
 const COPENHAGEN_TIME_ZONE = 'Europe/Copenhagen';
 const ONLINE_PATTERN = /zoom|google meet|meet\.google|teams\.microsoft|teams|online|webinar/i;
+const NEW_EVENTS_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
 const COPENHAGEN_DATE_PARTS_FORMATTER = new Intl.DateTimeFormat('sv-SE', {
   timeZone: COPENHAGEN_TIME_ZONE,
@@ -119,9 +120,8 @@ export const buildFilters = (formData, searchQuery, helpers = {}) => {
     price: normalize(getValue('price')),
     format: normalize(getValue('format')),
     quickToday: Boolean(getValue('quick-today')),
-    quickTomorrow: Boolean(getValue('quick-tomorrow')),
     quickWeekend: Boolean(getValue('quick-weekend')),
-    quickOnline: Boolean(getValue('quick-online')),
+    quickNew: Boolean(getValue('quick-new')),
     quickFavorites: Boolean(getValue('quick-favorites')),
     showPast: Boolean(getValue('show-past')),
     tags: getAll('tags').map((tag) => normalize(tag)).filter(Boolean),
@@ -176,25 +176,23 @@ export const eventMatchesFilters = (event, filters, helpers = {}, options = {}) 
       return false;
     }
   }
-  if (filters.quickTomorrow) {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    if (
-      startDate.getFullYear() !== tomorrow.getFullYear() ||
-      startDate.getMonth() !== tomorrow.getMonth() ||
-      startDate.getDate() !== tomorrow.getDate()
-    ) {
-      return false;
-    }
-  }
   if (filters.quickWeekend) {
     const day = startDate.getDay();
     if (day !== 0 && day !== 6) {
       return false;
     }
   }
-  if (filters.quickOnline && normalize(event.format) !== 'online') {
-    return false;
+  if (filters.quickNew) {
+    const createdRaw = event?.createdAt || event?.created_at;
+    const createdAt = createdRaw ? new Date(createdRaw) : null;
+    const now = options.now instanceof Date ? options.now : new Date();
+    if (!(createdAt instanceof Date) || Number.isNaN(createdAt.getTime())) {
+      return false;
+    }
+    const ageMs = now.getTime() - createdAt.getTime();
+    if (ageMs < 0 || ageMs > NEW_EVENTS_WINDOW_MS) {
+      return false;
+    }
   }
   if (filters.quickFavorites && !isSaved(event?.id)) {
     return false;

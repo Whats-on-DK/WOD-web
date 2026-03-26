@@ -1725,9 +1725,8 @@ export const initAdmin = ({ formatMessage }) => {
         if (!card) return;
         const eventId = card.dataset.eventId || '';
         if (target.dataset.action === 'view') {
-          const item = pendingById.get(eventId);
-          if (item) {
-            openEditModal(target, item);
+          if (eventId) {
+            window.location.href = `./event-card.html?id=${encodeURIComponent(eventId)}&admin=1`;
           }
           return;
         }
