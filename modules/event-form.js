@@ -15,10 +15,6 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
   const multiStepForm = document.querySelector('.multi-step');
   if (!multiStepForm) return;
 
-  const steps = Array.from(multiStepForm.querySelectorAll('.form-step'));
-  const stepperItems = Array.from(document.querySelectorAll('.stepper__item'));
-  const nextButton = multiStepForm.querySelector('[data-action="next"]');
-  const backButton = multiStepForm.querySelector('[data-action="back"]');
   const previewTitle = document.querySelector('#preview-title');
   const previewOrganizer = document.querySelector('#preview-organizer');
   const previewDescription = document.querySelector('#preview-description');
@@ -45,7 +41,6 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
   const honeypotField = multiStepForm.querySelector('input[name="website"]');
   const pendingTags = new Set();
   const knownTagsByKey = new Map();
-  let currentStep = 0;
   const publishButton = multiStepForm.querySelector('button[type="submit"]');
   const verificationWarning = multiStepForm.querySelector('[data-verification-warning]');
   const submitStatus = multiStepForm.querySelector('[data-submit-status]');
@@ -393,27 +388,14 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     window.netlifyIdentity.init();
   };
 
-  const setStep = (index) => {
-    steps.forEach((step, stepIndex) => {
-      const isActive = stepIndex === index;
-      step.classList.toggle('is-active', isActive);
-      step.hidden = !isActive;
-    });
-    stepperItems.forEach((item, itemIndex) => {
-      if (itemIndex === index) {
-        item.setAttribute('aria-current', 'step');
-      } else {
-        item.removeAttribute('aria-current');
+  const getValidatableFields = () =>
+    Array.from(multiStepForm.querySelectorAll('input, select, textarea')).filter((field) => {
+      if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) {
+        return false;
       }
+      if (field.type === 'hidden' || field.disabled) return false;
+      return true;
     });
-    if (backButton) {
-      backButton.disabled = index === 0;
-    }
-    if (nextButton) {
-      nextButton.hidden = index === steps.length - 1;
-    }
-    updatePreview();
-  };
 
   const getFieldValue = (name) => {
     const field = multiStepForm.elements[name];
@@ -623,20 +605,52 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     });
   }
 
-  const validateStep = () => {
-    if (currentStep === 0) {
-      ensureTagsSelected(false);
+  const validateForm = () => {
+    ensureTagsSelected(false);
+    const descriptionValue = String(descriptionField?.value || '').trim();
+    if (!descriptionValue) {
+      const message = formatMessage('form_description_required', {}) || 'Опис події обовʼязковий.';
+      if (descriptionField) {
+        descriptionField.setCustomValidity(message);
+        descriptionField.reportValidity();
+        descriptionField.focus();
+      }
+      if (submitStatus) {
+        submitStatus.textContent = message;
+      }
+      return false;
     }
-    const activeStep = steps[currentStep];
-    if (!activeStep) return true;
-    const fields = Array.from(activeStep.querySelectorAll('input, select, textarea')).filter(
-      (field) => field.type !== 'hidden'
-    );
+    if (descriptionField) {
+      descriptionField.setCustomValidity('');
+    }
+
+    if (cityField instanceof HTMLInputElement) {
+      const formatValue = String(getFieldValue('format') || '').trim().toLowerCase();
+      const cityRequired = formatValue !== 'online';
+      const cityValue = String(cityField.value || '').trim();
+      if (cityRequired && !cityValue) {
+        const message = formatMessage('form_city_required', {}) || 'Місто обовʼязкове.';
+        cityField.setCustomValidity(message);
+        cityField.reportValidity();
+        cityField.focus();
+        if (submitStatus) {
+          submitStatus.textContent = message;
+        }
+        return false;
+      }
+      cityField.setCustomValidity('');
+    }
+
+    const fields = getValidatableFields();
     for (const field of fields) {
+      if (field === descriptionField || field === cityField) continue;
       if (!field.checkValidity()) {
         field.reportValidity();
         return false;
       }
+    }
+    if (submitStatus) {
+      submitStatus.textContent = '';
     }
     return true;
   };
@@ -649,7 +663,7 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     return 'none';
   };
 
-  setStep(currentStep);
+  updatePreview();
   renderTagChips();
   loadKnownTags().then(() => {
     renderTagSuggestions(tagsInput?.value || '');
@@ -721,21 +735,26 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     });
   }
 
-  if (nextButton) {
-    nextButton.addEventListener('click', () => {
-      flushTagInput();
-      if (!validateStep()) return;
-      currentStep = Math.min(currentStep + 1, steps.length - 1);
-      setStep(currentStep);
-    });
-  }
+  multiStepForm.addEventListener('input', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) {
+      return;
+    }
+    if (target === descriptionField || target === cityField) {
+      target.setCustomValidity('');
+    }
+    if (target === tagsInput) return;
+    updatePreview();
+  });
 
-  if (backButton) {
-    backButton.addEventListener('click', () => {
-      currentStep = Math.max(currentStep - 1, 0);
-      setStep(currentStep);
-    });
-  }
+  multiStepForm.addEventListener('change', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) {
+      return;
+    }
+    if (target === imageInput || target === formatSelect || target === tagsInput) return;
+    updatePreview();
+  });
 
   multiStepForm.addEventListener('submit', async (event) => {
     flushTagInput();
@@ -767,7 +786,7 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     if (statusField) {
       statusField.value = isAdminBypass() ? 'approved' : 'pending';
     }
-    if (!validateStep()) {
+    if (!validateForm()) {
       return;
     }
     if (submitStatus) {

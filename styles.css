@@ -3427,8 +3427,29 @@ body[data-admin-auth="denied"] [data-admin-protected] {
 }
 
 .multi-step {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 20px;
+}
+
+.multi-step .form-step[data-step="1"] {
+  order: 1;
+}
+
+.multi-step .form-step[data-step="4"] {
+  order: 2;
+}
+
+.multi-step .form-step[data-step="2"] {
+  order: 3;
+}
+
+.multi-step .form-step[data-step="3"] {
+  order: 4;
+}
+
+.multi-step .form-step[data-step="5"] {
+  order: 5;
 }
 
 .form-step {

@@ -56,17 +56,9 @@
           <a class="btn ghost" href="./" data-i18n="back_to_dashboard">Назад до дашборду</a>
         </header>
 
-        <ol class="stepper" aria-label="Кроки створення події" data-i18n-aria="stepper_aria">
-          <li class="stepper__item" aria-current="step" data-i18n="step_basic">1. Основне</li>
-          <li class="stepper__item" data-i18n="step_time">2. Час/місце</li>
-          <li class="stepper__item" data-i18n="step_tickets">3. Квитки</li>
-          <li class="stepper__item" data-i18n="step_media">4. Медіа</li>
-          <li class="stepper__item" data-i18n="step_preview">5. Прев’ю</li>
-        </ol>
-
         <form class="multi-step" novalidate data-organizer-id="org-003">
           <input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
-          <section class="form-step is-active" data-step="1" aria-labelledby="step-title-1">
+          <section class="form-step" data-step="1" aria-labelledby="step-title-1">
             <h2 id="step-title-1" data-i18n="step_basic">Основне</h2>
             <div class="form-grid">
               <label class="form-field form-field--full">
@@ -120,7 +112,7 @@
             </div>
           </section>
 
-          <section class="form-step" data-step="2" aria-labelledby="step-title-2" hidden>
+          <section class="form-step" data-step="2" aria-labelledby="step-title-2">
             <h2 id="step-title-2" data-i18n="step_time">Час та місце</h2>
             <div class="form-grid">
               <label class="form-field">
@@ -185,7 +177,7 @@
             </div>
           </section>
 
-          <section class="form-step" data-step="3" aria-labelledby="step-title-3" hidden>
+          <section class="form-step" data-step="3" aria-labelledby="step-title-3">
             <h2 id="step-title-3" data-i18n="step_tickets">Квитки</h2>
             <div class="form-grid">
               <fieldset class="form-fieldset form-field--full">
@@ -223,7 +215,7 @@
             </div>
           </section>
 
-          <section class="form-step" data-step="4" aria-labelledby="step-title-4" hidden>
+          <section class="form-step" data-step="4" aria-labelledby="step-title-4">
             <h2 id="step-title-4" data-i18n="step_media">Медіа</h2>
             <div class="form-grid">
               <label class="form-field form-field--full">
@@ -297,7 +289,7 @@
             </fieldset>
           </section>
 
-          <section class="form-step" data-step="5" aria-labelledby="step-title-5" hidden>
+          <section class="form-step" data-step="5" aria-labelledby="step-title-5">
             <h2 id="step-title-5" data-i18n="step_preview">Прев’ю</h2>
             <div class="preview preview--detail" data-testid="preview">
               <div class="event-layout preview-layout">
@@ -352,11 +344,6 @@
               Щоб опублікувати подію, підтвердьте верифікацію організатора.
             </p>
           </section>
-
-          <div class="form-actions">
-            <button class="btn ghost" type="button" data-action="back" data-i18n="form_back">Назад</button>
-            <button class="btn primary" type="button" data-action="next" data-i18n="form_next">Далі</button>
-          </div>
         </form>
       </div>
     </main>

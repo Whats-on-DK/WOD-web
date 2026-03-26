@@ -195,13 +195,9 @@ test('admin can edit archived event opened from archive list and keep archived s
   await expect(titleField).toHaveValue('Archive Flow Event');
   await titleField.fill('Archive Flow Event Updated');
   await expect(titleField).toHaveValue('Archive Flow Event Updated');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
   await page.getByLabel(/Початок|Start/i).waitFor({ state: 'visible' });
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
   await page.getByLabel(/Платно|Paid|Betalt|Безкоштовно|Free|Gratis/i).first().waitFor({ state: 'visible' });
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
   await page.locator('input[name="image"]').waitFor({ state: 'visible' });
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
   await page.getByRole('button', { name: /Опублікувати|Publish|Udgiv/i }).click();
 
   await expect(page).toHaveURL(/event-card\.html\?id=evt-arch-flow/);

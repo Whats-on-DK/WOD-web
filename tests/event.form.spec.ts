@@ -5,16 +5,12 @@ test('create event without end time', async ({ page }) => {
   await enableAdminSession(page);
   await page.goto('/new-event.html');
   await page.locator('.multi-step[data-ready="true"]').waitFor({ state: 'attached' });
-  // Step 1
   await page.getByLabel(/Назва|Title|Titel/i).fill('Test meetup');
   await page.getByLabel(/Опис|Description|Beskrivelse/i).fill('Short event description.');
   const tagsInput = page.getByLabel(/Додати тег|Add tag|Tilføj tag/i);
   await tagsInput.fill('Community');
   await tagsInput.press('Enter');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
-  await page.getByLabel(/Початок|Start/i).waitFor({ state: 'visible' });
 
-  // Step 2: set only start, no end
   await page.getByLabel(/Початок|Start/i).fill('2030-05-01T18:00');
   await page.locator('select[name="format"]').selectOption({ value: 'offline' });
   await page.locator('select[name="language"]').selectOption({ value: 'uk' });
@@ -22,13 +18,9 @@ test('create event without end time', async ({ page }) => {
   await page.locator('input[name="city"]').fill('Copenhagen');
   // Ensure timezone selector is absent
   await expect(page.locator('[name=\"timezone\"]')).toHaveCount(0);
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
 
-  // Step 3: Free event
   await page.getByLabel(/Безкоштовно|Free|Gratis/i).check();
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
 
-  // Step 4: skip media
   await page.locator('input[name="image"]').setInputFiles({
     name: 'event.png',
     mimeType: 'image/png',
@@ -39,9 +31,7 @@ test('create event without end time', async ({ page }) => {
   });
   await page.locator('input[name="contact-name"]').fill('Olena K.');
   await page.locator('input[name="contact-email"]').fill('verify@example.com');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
 
-  // Step 5: Preview shows only start date/time
   const previewTime = page.locator('#preview-time');
   await expect(previewTime).toContainText(/01\.05\.2030/);
   await expect(previewTime).not.toContainText(/–/); // no end time range
@@ -57,17 +47,14 @@ test('online event can be published without city', async ({ page }) => {
   const tagsInput = page.getByLabel(/Додати тег|Add tag|Tilføj tag/i);
   await tagsInput.fill('Community');
   await tagsInput.press('Enter');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
 
   await page.getByLabel(/Початок|Start/i).fill('2030-05-02T18:00');
   await page.locator('select[name="format"]').selectOption({ value: 'online' });
   await page.locator('select[name="language"]').selectOption({ value: 'uk' });
   await page.getByLabel(/Адреса|Address|Adresse/i).fill('Zoom');
   await page.locator('input[name="city"]').fill('');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
 
   await page.getByLabel(/Безкоштовно|Free|Gratis/i).check();
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
   await page.locator('input[name="image"]').setInputFiles({
     name: 'event.png',
     mimeType: 'image/png',
@@ -77,7 +64,6 @@ test('online event can be published without city', async ({ page }) => {
     )
   });
   await page.locator('input[name="contact-name"]').fill('Olena K.');
-  await page.getByRole('button', { name: /Далі|Next|Næste/i }).click();
   await page.getByRole('button', { name: /Опублікувати|Publish|Udgiv/i }).click();
 
   await expect(page).toHaveURL(/event-card\.html\?id=/);
