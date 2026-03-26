@@ -1,3 +1,10 @@
 User-agent: *
 Allow: /
-Sitemap: /sitemap.xml
+Disallow: /admin-login.html
+Disallow: /admin-page.html
+Disallow: /admin-partners.html
+Disallow: /dashboard.html
+Disallow: /new-event.html
+Disallow: /.netlify/functions/
+
+Sitemap: https://whats-on-dk.netlify.app/sitemap.xml

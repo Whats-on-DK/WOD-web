@@ -3706,7 +3706,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
   const updateEventSocialMeta = (eventData) => {
     if (!eventData?.id) return;
     const eventUrl = buildEventPageUrl(eventData);
-    const title = `${String(eventData.title || '').trim() || 'Подія'} — What's on DK?`;
+    const title = `${String(eventData.title || '').trim() || 'Подія'} — What’s on DK`;
     const city = getDisplayCity(eventData.city);
     const dateLabel = formatDateRange(eventData.start, eventData.end);
     const description = [dateLabel, city].filter(Boolean).join(' · ') || 'Деталі події в Данії.';
@@ -4619,7 +4619,7 @@ import { MAX_RECOMMENDED_SLOTS } from './modules/recommended-slots.mjs';
           partnerCtaEl.hidden = true;
         }
       }
-      document.title = `${partner?.name || 'Партнер'} — What's on DK?`;
+      document.title = `${partner?.name || 'Партнер'} — What’s on DK`;
     };
 
     const loadPartner = async () => {

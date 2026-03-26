@@ -3,21 +3,52 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>What's on DK? — Події для українців у Данії</title>
-    <meta name="description" content="Події, зустрічі та спільноти для українців у Данії." />
-    <meta property="og:title" content="What's on DK? — Події для українців у Данії" />
-    <meta property="og:description" content="Події, зустрічі та спільноти для українців у Данії." />
+    <title>What’s on DK — Події для українців у Данії</title>
+    <meta name="description" content="What’s on DK — події, зустрічі та можливості для українців у Данії: офлайн та онлайн." />
+    <meta property="og:title" content="What’s on DK — Події для українців у Данії" />
+    <meta property="og:description" content="What’s on DK — події, зустрічі та можливості для українців у Данії: офлайн та онлайн." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/static/og-placeholder-white.png" />
-    <meta property="og:url" content="/" />
+    <meta property="og:image" content="https://whats-on-dk.netlify.app/static/og-placeholder-white.png" />
+    <meta property="og:url" content="https://whats-on-dk.netlify.app/" />
+    <meta property="og:site_name" content="What’s on DK" />
     <meta property="og:locale" content="uk_UA" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="What's on DK? — Події для українців у Данії" />
-    <meta name="twitter:description" content="Події, зустрічі та спільноти для українців у Данії." />
-    <meta name="twitter:image" content="/static/og-placeholder-white.png" />
+    <meta name="twitter:title" content="What’s on DK — Події для українців у Данії" />
+    <meta name="twitter:description" content="What’s on DK — події, зустрічі та можливості для українців у Данії: офлайн та онлайн." />
+    <meta name="twitter:image" content="https://whats-on-dk.netlify.app/static/og-placeholder-white.png" />
+    <link rel="canonical" href="https://whats-on-dk.netlify.app/" />
     <link rel="alternate" hreflang="uk" href="./?lang=uk" />
     <link rel="alternate" hreflang="en" href="./?lang=en" />
     <link rel="alternate" hreflang="da" href="./?lang=da" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://whats-on-dk.netlify.app/#organization",
+            "name": "What’s on DK",
+            "url": "https://whats-on-dk.netlify.app/",
+            "logo": "https://whats-on-dk.netlify.app/static/wod_logo.PNG",
+            "sameAs": [
+              "https://www.instagram.com/whats_on_dk/",
+              "https://www.threads.com/@whats_on_dk?igshid=NTc4MTIwNjQ2YQ==",
+              "https://www.facebook.com/profile.php?id=61577676845795"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://whats-on-dk.netlify.app/#website",
+            "url": "https://whats-on-dk.netlify.app/",
+            "name": "What’s on DK",
+            "publisher": {
+              "@id": "https://whats-on-dk.netlify.app/#organization"
+            },
+            "inLanguage": "uk"
+          }
+        ]
+      }
+    </script>
     <link rel="stylesheet" href="./styles.css" />
     <script type="module" src="./script.js" defer></script>
   </head>
@@ -27,8 +58,8 @@
     <header class="site-header" role="banner">
       <div class="container header__inner">
         <a class="brand" href="./" aria-label="Домівка" data-i18n-aria="home_link">
-          <img class="brand__logo" data-testid="logo" src="./static/wod_logo.PNG" alt="What's on DK? логотип" width="1024" height="1024" decoding="async" loading="eager" />
-          <span class="visually-hidden">What's on DK?</span>
+          <img class="brand__logo" data-testid="logo" src="./static/wod_logo.PNG" alt="What’s on DK логотип" width="1024" height="1024" decoding="async" loading="eager" />
+          <span class="visually-hidden">What’s on DK</span>
         </a>
         <button class="menu-toggle" type="button" aria-controls="primary-nav" aria-expanded="false">
           <span class="sr-only" data-i18n="nav_toggle">Перемкнути навігацію</span>
@@ -115,7 +146,7 @@
                       <span class="poster-card__price hero-card__price" data-hero-price>Ціна уточнюється</span>
                     </div>
                     <div class="poster-card__bottom poster-card__bottom--center">
-                      <p class="poster-card__title hero-card__title" data-hero-title>Design Systems Meetup</p>
+                      <p class="poster-card__title hero-card__title" data-hero-title>Подія</p>
                       <p class="poster-card__meta hero-card__meta" data-hero-meta>Kyiv · Fri 7:00 PM</p>
                       <div class="hero-card__tags" data-hero-tags>
                         <span>Community</span>

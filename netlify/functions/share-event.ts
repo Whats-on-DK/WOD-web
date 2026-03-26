@@ -145,7 +145,7 @@ export const handler = async (event: HandlerEvent) => {
     }
 
     const rawTitle = String(row?.title || fallbackTitle || 'Подія').trim();
-    const title = `${rawTitle} — What's on DK?`;
+    const title = `${rawTitle} — What’s on DK`;
     const description =
       String(row?.description || fallbackDescription || '').trim() || 'Деталі події в Данії.';
     const image = toAbsoluteImageUrl(
@@ -196,14 +196,14 @@ export const handler = async (event: HandlerEvent) => {
 <html lang="uk">
   <head>
     <meta charset="utf-8" />
-    <title>Подія — What's on DK?</title>
-    <meta property="og:title" content="Подія — What's on DK?" />
+    <title>Подія — What’s on DK</title>
+    <meta property="og:title" content="Подія — What’s on DK" />
     <meta property="og:description" content="Деталі події в Данії." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="${escapeHtml(`${origin}${DEFAULT_IMAGE_PATH}`)}" />
     <meta property="og:url" content="${escapeHtml(eventUrl)}" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Подія — What's on DK?" />
+    <meta name="twitter:title" content="Подія — What’s on DK" />
     <meta name="twitter:description" content="Деталі події в Данії." />
     <meta name="twitter:image" content="${escapeHtml(`${origin}${DEFAULT_IMAGE_PATH}`)}" />
     <link rel="canonical" href="${escapeHtml(shareUrl)}" />
