@@ -39,6 +39,17 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
   const verificationBanner = multiStepForm.querySelector('[data-verification-banner]');
   const verificationBannerButton = multiStepForm.querySelector('[data-action="open-verification"]');
   const honeypotField = multiStepForm.querySelector('input[name="website"]');
+  const adminOnlyContactFieldNames = [
+    'contact-email',
+    'contact-phone',
+    'contact-website',
+    'contact-instagram',
+    'contact-facebook',
+    'contact-telegram'
+  ];
+  const adminOnlyContactFields = adminOnlyContactFieldNames
+    .map((name) => multiStepForm.querySelector(`[name="${name}"]`))
+    .filter(Boolean);
   const pendingTags = new Set();
   const knownTagsByKey = new Map();
   const publishButton = multiStepForm.querySelector('button[type="submit"]');
@@ -61,6 +72,36 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
     } catch (error) {
       return false;
     }
+  };
+
+  const applyAdminOnlyContactVisibility = (isAdmin) => {
+    adminOnlyContactFields.forEach((field) => {
+      if (
+        !(
+          field instanceof HTMLInputElement ||
+          field instanceof HTMLTextAreaElement ||
+          field instanceof HTMLSelectElement
+        )
+      ) {
+        return;
+      }
+      const wrapper = field.closest('.form-field');
+      if (wrapper instanceof HTMLElement) {
+        wrapper.hidden = !isAdmin;
+      }
+      field.disabled = !isAdmin;
+      if (!isAdmin) {
+        field.value = '';
+        field.setCustomValidity('');
+      }
+    });
+  };
+
+  const scrubNonAdminContactPayload = (payload) => {
+    if (isAdminBypass()) return;
+    adminOnlyContactFieldNames.forEach((key) => {
+      payload[key] = '';
+    });
   };
 
   const getTagsRequiredMessage = () =>
@@ -670,6 +711,7 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
   });
   publishState.update = () => {
     const isAdmin = isAdminBypass();
+    applyAdminOnlyContactVisibility(isAdmin);
     const verified = getEffectiveOrganizerStatus() !== 'none';
     const hasTags = pendingTags.size > 0;
     if (publishButton) {
@@ -796,6 +838,7 @@ export const initEventForm = ({ formatMessage, getVerificationState, publishStat
       const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
       const formData = new FormData(multiStepForm);
       const payload = Object.fromEntries(formData.entries());
+      scrubNonAdminContactPayload(payload);
       payload.language = normalizeEventLanguage(payload.language);
       payload.description = String(payload.description || '').trim();
       if (!payload.description) {
